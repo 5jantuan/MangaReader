@@ -1,0 +1,18 @@
+@using MangaReader.Domain.Entities
+@model IReadOnlyList<Phrase>
+
+<h1>Phrases</h1>
+
+@if (!Model.Any())
+{
+    <p>Нет фраз</p>
+}
+else
+{
+    <ul>
+        @foreach (var phrase in Model)
+        {
+            <li>@phrase.Text</li>
+        }
+    </ul>
+}
