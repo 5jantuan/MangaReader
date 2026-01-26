@@ -1,3 +1,6 @@
+using System.Linq.Expressions;
+using System.Text;
+
 namespace MangaReader.Domain.Entities;
 
 public class Phrase
@@ -10,7 +13,8 @@ public class Phrase
     public decimal Y { get; private set; }
     public decimal Width { get; private set; }
     public decimal Height { get; private set; }
-    public ICollection<PhraseTranslation> PhraseTranslations { get; private set; } = new List<PhraseTranslation>();
+    private readonly List<PhraseTranslation> _translations = new();
+    public IReadOnlyCollection<PhraseTranslation> PhraseTranslations => _translations;
 
     public DateTime CreatedAt { get; private set; }
 
@@ -41,5 +45,26 @@ public class Phrase
         Height = height;
 
         CreatedAt = DateTime.UtcNow;
+    }
+
+    public void AddTranslation(Guid languageId, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            throw new ArgumentException("Translation text cannot be empty", nameof(text));
+        }
+            
+        if(_translations.Any(t => t.LanguageId == languageId))
+        {
+            throw new InvalidOperationException("Translation for this language already exists");
+        }
+
+        var translation = new PhraseTranslation(
+            Id,
+            languageId,
+            text
+        );
+
+        _translations.Add(translation);
     }
 }
