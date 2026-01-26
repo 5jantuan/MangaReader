@@ -17,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 builder.Services.AddScoped<IPhraseRepository, PhraseRepository>();
+builder.Services.AddScoped<IPhraseService, PhraseService>();
 
 
 var app = builder.Build();

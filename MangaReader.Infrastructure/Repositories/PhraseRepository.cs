@@ -37,4 +37,11 @@ public class PhraseRepository : IPhraseRepository
         _context.Phrases.Remove(phrase);
         await _context.SaveChangesAsync();
     }
+
+    public async Task UpdateAsync(Phrase phrase)
+    {
+        _context.Phrases.Update(phrase); // помечаем сущность как изменённую
+        await _context.SaveChangesAsync(); // сохраняем изменения в БД
+    }
+
 }

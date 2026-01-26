@@ -8,5 +8,5 @@ public interface IPhraseRepository
     Task<IReadOnlyList<Phrase>> GetByPageIdAsync(Guid pageId);
     Task AddAsync(Phrase phrase);
     Task RemoveAsync(Phrase phrase);
-
+    Task UpdateAsync(Phrase phrase);
 }
