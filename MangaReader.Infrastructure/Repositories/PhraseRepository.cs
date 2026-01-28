@@ -44,4 +44,9 @@ public class PhraseRepository : IPhraseRepository
         await _context.SaveChangesAsync(); // сохраняем изменения в БД
     }
 
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
+
 }

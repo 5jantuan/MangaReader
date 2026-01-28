@@ -1,20 +1,18 @@
-using MangaReader.Domain.Interfaces;
+using MangaReader.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-
-namespace MangaReader.Web.Controllers;
 
 public class PhrasesController : Controller
 {
-    private readonly IPhraseRepository _phraseRepository;
+    private readonly IPhraseService _phraseService;
 
-    public PhrasesController(IPhraseRepository phraseRepository)
+    public PhrasesController(IPhraseService phraseService)
     {
-        _phraseRepository = phraseRepository;
+        _phraseService = phraseService;
     }
 
     public async Task<IActionResult> Index(Guid pageId)
     {
-        var phrases = await _phraseRepository.GetByPageIdAsync(pageId);
+        var phrases = await _phraseService.GetByPageIdAsync(pageId);
         return View(phrases);
     }
 }

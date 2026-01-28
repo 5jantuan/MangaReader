@@ -9,4 +9,5 @@ public interface IPhraseRepository
     Task AddAsync(Phrase phrase);
     Task RemoveAsync(Phrase phrase);
     Task UpdateAsync(Phrase phrase);
+    Task SaveChangesAsync();
 }
