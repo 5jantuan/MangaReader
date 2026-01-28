@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPhraseRepository, PhraseRepository>();
 builder.Services.AddScoped<IPhraseService, PhraseService>();
 builder.Services.AddScoped<IAddPhraseTranslationUseCase, AddPhraseTranslationUseCase>();
+builder.Services.AddScoped<IGetPhrasesForPageUseCase, GetPhrasesForPageUseCase>();
 
 
 
