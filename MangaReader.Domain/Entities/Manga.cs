@@ -6,6 +6,7 @@ public class Manga
     public string Title { get; private set; }
     public string Description { get; private set; }
     public string Author { get; private set; }
+    public ICollection<MangaCover> Covers { get; private set; } = new List<MangaCover>();
     public ICollection<Chapter> Chapters { get; private set; } = new List<Chapter>();
     public DateTime CreatedAt { get; private set; }
 
@@ -50,4 +51,19 @@ public class Manga
             throw new ArgumentNullException(nameof(chapter));
         Chapters.Add(chapter);
     }
+
+    public void PinCover(Guid coverId)
+    {
+        var coverToPin = Covers.FirstOrDefault(c => c.Id == coverId)
+            ?? throw new InvalidOperationException("Cover not found");
+
+        if (coverToPin.IsPinned)
+            return;
+
+        foreach (var cover in Covers.Where(c => c.IsPinned))
+            cover.Unpin();
+
+        coverToPin.Pin();
+    }
+
 }
