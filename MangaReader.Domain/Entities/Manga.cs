@@ -5,32 +5,26 @@ public class Manga
     public Guid Id { get; private set; }
     public string Title { get; private set; }
     public string Description { get; private set; }
-    public string Author { get; private set; }
+    public Guid AuthorId { get; private set; }
     public ICollection<MangaCover> Covers { get; private set; } = new List<MangaCover>();
     public ICollection<Chapter> Chapters { get; private set; } = new List<Chapter>();
     public DateTime CreatedAt { get; private set; }
-
-    // Внешний ключ к пользователю
-    public Guid UserId { get; private set; }
-    public User User { get; private set; }
 
     // EF Core требует пустой конструктор, делаем его защищённым
     protected Manga() { }
 
     // Конструктор для создания новой манги
-    public Manga(string title, string description, string author, User user)
+    public Manga(string title, string description, User author)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title cannot be empty", nameof(title));
-        if (user == null)
-            throw new ArgumentNullException(nameof(user));
+        if (!author.IsAuthor())
+            throw new InvalidOperationException("User must have Author role");
 
         Id = Guid.NewGuid();
+        AuthorId = author.Id;
         Title = title;
         Description = description ?? string.Empty;
-        Author = author ?? string.Empty;
-        User = user;
-        UserId = user.Id;
         CreatedAt = DateTime.UtcNow;
     }
 
@@ -45,11 +39,17 @@ public class Manga
     }
 
     // Метод для добавления главы
-    public void AddChapter(Chapter chapter)
+    public Chapter CreateChapter(string title)
     {
-        if (chapter == null)
-            throw new ArgumentNullException(nameof(chapter));
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Chapter title cannot be empty");
+
+        var nextNumber = Chapters.Count + 1;
+
+        var chapter = new Chapter(Id, nextNumber, title);
         Chapters.Add(chapter);
+
+        return chapter;
     }
 
     public void PinCover(Guid coverId)

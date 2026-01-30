@@ -15,7 +15,7 @@ public class Chapter
     protected Chapter() { } // для EF
 
     // Конструктор с объектом Manga
-    public Chapter(Manga manga, int number, string title)
+    internal Chapter(Manga manga, int number, string title)
     {
         Manga = manga ?? throw new ArgumentNullException(nameof(manga));
         MangaId = manga.Id;
