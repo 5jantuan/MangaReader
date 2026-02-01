@@ -1,8 +1,12 @@
-public interface AddTranslationUseCase
+using MangaReader.Domain.Entities;
+
+namespace MangaReader.Application.Interfaces;
+
+public interface IAddPhraseTranslationUseCase
 {
     Task ExecuteAsync(
         Guid phraseId,
-        Guid languageId,
+        Language language,
         string tranlatedtext
     );
 }

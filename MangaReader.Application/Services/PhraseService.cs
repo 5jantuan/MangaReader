@@ -1,4 +1,6 @@
 using MangaReader.Domain.Interfaces;
+using MangaReader.Domain.Entities;
+
 using MangaReader.Application.Interfaces;
 
 namespace MangaReader.Application.Services
@@ -12,13 +14,13 @@ namespace MangaReader.Application.Services
             _phraseRepository = phraseRepository;
         }
 
-        public async Task AddTranslationAsync(Guid phraseId, Guid languageId, string text)
+        public async Task AddTranslationAsync(Guid phraseId,Language language, string text)
         {
             var phrase = await _phraseRepository.GetByIdAsync(phraseId);
             if (phrase == null)
                 throw new InvalidOperationException("Phrase not found");
 
-            phrase.AddTranslation(languageId, text);
+            phrase.AddTranslation(language, text);
             await _phraseRepository.UpdateAsync(phrase);
         }
     }

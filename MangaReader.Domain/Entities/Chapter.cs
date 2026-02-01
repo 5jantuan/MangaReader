@@ -4,45 +4,41 @@ public class Chapter
 {
     public Guid Id { get; private set; }
     public Guid MangaId { get; private set; }
-    public Manga Manga { get; private set; }
-
+    public Manga Manga { get; private set; } = null!;
     public int Number { get; private set; }
     public string Title { get; private set; }
-
-    public ICollection<Page> Pages { get; private set; } = new List<Page>();
     public DateTime CreatedAt { get; private set; }
 
-    protected Chapter() { } // для EF
+    private readonly List<Page> _pages = new();
+    public IReadOnlyCollection<Page> Pages => _pages;
 
-    // Конструктор с объектом Manga
+    protected Chapter() { }
+
     internal Chapter(Manga manga, int number, string title)
     {
-        Manga = manga ?? throw new ArgumentNullException(nameof(manga));
-        MangaId = manga.Id;
-
-        Number = number > 0 ? number : throw new ArgumentException("Chapter number must be positive", nameof(number));
-        Title = !string.IsNullOrWhiteSpace(title) ? title : throw new ArgumentException("Title cannot be empty", nameof(title));
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Title cannot be empty");
 
         Id = Guid.NewGuid();
+        Manga = manga;
+        MangaId = manga.Id;
+        Number = number;
+        Title = title;
         CreatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateInfo(int number, string title)
+    internal void AddPage(string imagePath)
     {
-        if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Title cannot be empty", nameof(title));
-
-        if (number <= 0)
-            throw new ArgumentException("Chapter number must be positive", nameof(number));
-
-        Number = number;
-        Title = title;
+        var nextNumber = _pages.Count + 1;
+        var page = new Page(Id, nextNumber, imagePath);
+        _pages.Add(page);
     }
 
-    public void AddPage(Page page)
+    public void Rename(string title)
     {
-        if (page == null)
-            throw new ArgumentNullException(nameof(page));
-        Pages.Add(page);
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Title cannot be empty");
+
+        Title = title;
     }
 }

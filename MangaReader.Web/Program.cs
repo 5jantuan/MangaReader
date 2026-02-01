@@ -2,6 +2,10 @@ using MangaReader.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using MangaReader.Domain.Interfaces;
 using MangaReader.Infrastructure.Repositories;
+using MangaReader.Application.Interfaces;
+using MangaReader.Application.Services;
+using MangaReader.Application.UseCases;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,10 +22,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IPhraseRepository, PhraseRepository>();
 builder.Services.AddScoped<IPhraseService, PhraseService>();
-builder.Services.AddScoped<IAddPhraseTranslationUseCase, AddPhraseTranslationUseCase>();
 builder.Services.AddScoped<IGetPhrasesForPageUseCase, GetPhrasesForPageUseCase>();
-
-
+builder.Services.AddScoped<
+    MangaReader.Application.Interfaces.IAddPhraseTranslationUseCase,
+    MangaReader.Application.UseCases.AddPhraseTranslationUseCase>();
 
 var app = builder.Build();
 

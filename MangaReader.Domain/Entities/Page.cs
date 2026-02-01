@@ -2,21 +2,26 @@ namespace MangaReader.Domain.Entities;
 
 public class Page
 {
-    public Guid Id {get; private set;}
-    public Guid ChapterId{ get; private set;}
-    public int Number { get; private set;}
-    public string ImagePath { get; set; } = null!;
-    public Chapter Chapter { get; set; } = null!;
+    public Guid Id { get; private set; }
+    public Guid ChapterId { get; private set; }
+    public int Number { get; private set; }
+    public string ImagePath { get; private set; }
+    public Chapter Chapter { get; private set; } = null!;
+    private readonly List<Phrase> _phrases = new();
+    public IReadOnlyCollection<Phrase> Phrases => _phrases;
+    public DateTime CreatedAt { get; private set; }
 
-    public ICollection<Phrase> Phrases { get; set; } = new List<Phrase>();
-    public DateTime CreatedAt{get; private set;}
+    protected Page() { }
 
-    protected Page(Guid chapterId, int number, string imagePath)
+    internal Page(Guid chapterId, int number, string imagePath)
     {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            throw new ArgumentException("ImagePath cannot be empty");
+
         Id = Guid.NewGuid();
         ChapterId = chapterId;
         Number = number;
-        ImagePath = !string.IsNullOrWhiteSpace(imagePath) ? imagePath : throw new ArgumentException("ImagePath cannot be empty");
+        ImagePath = imagePath;
         CreatedAt = DateTime.UtcNow;
     }
 }

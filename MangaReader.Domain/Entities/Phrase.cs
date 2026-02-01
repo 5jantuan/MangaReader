@@ -1,3 +1,4 @@
+using System.Diagnostics.SymbolStore;
 using System.Linq.Expressions;
 using System.Text;
 
@@ -47,21 +48,21 @@ public class Phrase
         CreatedAt = DateTime.UtcNow;
     }
 
-    public void AddTranslation(Guid languageId, string text)
+    public void AddTranslation(Language language, string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             throw new ArgumentException("Translation text cannot be empty", nameof(text));
         }
             
-        if(_translations.Any(t => t.LanguageId == languageId))
+        if(_translations.Any(t => t.Language.Id == language.Id))
         {
             throw new InvalidOperationException("Translation for this language already exists");
         }
 
         var translation = new PhraseTranslation(
-            Id,
-            languageId,
+            this,
+            language,
             text
         );
 

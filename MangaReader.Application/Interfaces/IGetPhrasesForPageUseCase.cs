@@ -1,3 +1,5 @@
+using MangaReader.Domain.Entities;
+
 namespace MangaReader.Application.Interfaces;
 
 public interface IGetPhrasesForPageUseCase

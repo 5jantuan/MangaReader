@@ -6,12 +6,20 @@ public class Manga
     public string Title { get; private set; }
     public string Description { get; private set; }
     public Guid AuthorId { get; private set; }
-    public ICollection<MangaCover> Covers { get; private set; } = new List<MangaCover>();
-    public ICollection<Chapter> Chapters { get; private set; } = new List<Chapter>();
+    private readonly List<MangaCover> _covers;
+    private readonly List<Chapter> _chapters;
+
+    public IReadOnlyCollection<MangaCover> Covers => _covers;
+    public IReadOnlyCollection<Chapter> Chapters => _chapters;
+
     public DateTime CreatedAt { get; private set; }
 
     // EF Core требует пустой конструктор, делаем его защищённым
-    protected Manga() { }
+    protected Manga()
+    {
+        _covers = new();
+        _chapters = new();
+    }
 
     // Конструктор для создания новой манги
     public Manga(string title, string description, User author)
@@ -26,6 +34,8 @@ public class Manga
         Title = title;
         Description = description ?? string.Empty;
         CreatedAt = DateTime.UtcNow;
+        _covers = new();
+        _chapters = new();
     }
 
     // Метод для обновления информации
@@ -39,16 +49,19 @@ public class Manga
     }
 
     // Метод для добавления главы
-    public Chapter CreateChapter(string title)
+    public Chapter CreateChapter(string title, IEnumerable<string> pageImagePaths)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Chapter title cannot be empty");
 
         var nextNumber = Chapters.Count + 1;
 
-        var chapter = new Chapter(Id, nextNumber, title);
-        Chapters.Add(chapter);
+        var chapter = new Chapter(this, nextNumber, title);
 
+        foreach (var path in pageImagePaths)
+        chapter.AddPage(path);
+
+        _chapters.Add(chapter);
         return chapter;
     }
 

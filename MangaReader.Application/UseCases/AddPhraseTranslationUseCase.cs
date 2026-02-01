@@ -1,12 +1,24 @@
+using System.Diagnostics.SymbolStore;
+using MangaReader.Application.Interfaces;
 using MangaReader.Domain.Interfaces;
+using MangaReader.Domain.Entities;
 
-public class AddPhraseTranslationUseCase : IAddPhraseTranslationUseCase
+
+namespace MangaReader.Application.UseCases;
+
+
+public class AddPhraseTranslationUseCase  : IAddPhraseTranslationUseCase
 {
-    private readonly IPhraseRepository _phraseRepjsitory;
+    private readonly IPhraseRepository _phraseRepository;
 
+    public AddPhraseTranslationUseCase(IPhraseRepository phraseRepository)
+    {
+        _phraseRepository = phraseRepository;
+    }
+    
     public async Task ExecuteAsync(
         Guid phraseId,
-        Guid languageId,
+        Language language,
         string translatedText
     )
     {
@@ -15,7 +27,7 @@ public class AddPhraseTranslationUseCase : IAddPhraseTranslationUseCase
         if (phrase == null)
             throw new InvalidOperationException("Phrase not found");
 
-        phrase.AddTranslation(languageId, translatedText);
+        phrase.AddTranslation(language, translatedText);
 
         await _phraseRepository.SaveChangesAsync();
     }
