@@ -26,6 +26,7 @@ builder.Services.AddScoped<IGetPhrasesForPageUseCase, GetPhrasesForPageUseCase>(
 builder.Services.AddScoped<
     MangaReader.Application.Interfaces.IAddPhraseTranslationUseCase,
     MangaReader.Application.UseCases.AddPhraseTranslationUseCase>();
+builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 
 var app = builder.Build();
 
