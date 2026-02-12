@@ -56,6 +56,7 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<LoginUseCase>();
+builder.Services.AddScoped<RegisterUserUseCase>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 
