@@ -3,8 +3,8 @@ namespace MangaReader.Domain.Entities;
 public class Manga
 {
     public Guid Id { get; private set; }
-    public string Title { get; private set; }
-    public string Description { get; private set; }
+    public string Title { get; private set; } = null!;
+    public string Description { get; private set; } = null!;
     public Guid AuthorId { get; private set; }
     private readonly List<MangaCover> _covers;
     private readonly List<Chapter> _chapters;

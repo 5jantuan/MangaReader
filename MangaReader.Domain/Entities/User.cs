@@ -1,13 +1,16 @@
 using System;
+using System.Linq.Expressions;
 using System.Security.Cryptography.X509Certificates;
+using MangaReader.Domain.Enums;
 
 namespace MangaReader.Domain.Entities;
 
 public class User
 {
     public Guid Id { get; private set; }
-    public string UserName { get; private set; }
-    public string PasswordHash { get; private set; }
+    public string UserName { get; private set; } = null!;
+    public string PasswordHash { get; private set; } = null!;
+    public Guid PreferredLanguageId { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
     private readonly HashSet<UserRole> _roles = new();
@@ -15,14 +18,19 @@ public class User
 
     protected User() { } // EF
 
-    public User(string userName, string passwordHash)
+    public User(string userName, string passwordHash, Guid preferredLanguageId)
     {
         if (string.IsNullOrWhiteSpace(userName))
             throw new ArgumentException("Username cannot be empty", nameof(userName));
 
+        if (preferredLanguageId == Guid.Empty)
+            throw new ArgumentException("Language cannot be empty", nameof(preferredLanguageId));
+
+
         Id = Guid.NewGuid();
         UserName = userName;
         PasswordHash = passwordHash;
+        PreferredLanguageId = preferredLanguageId;
         CreatedAt = DateTime.UtcNow;
 
         // каждый пользователь — читатель по умолчанию
@@ -42,15 +50,26 @@ public class User
         _roles.Add(UserRole.Author);
     }
 
+    public void ChangeUserName(string newUserName)
+    {
+        if (string.IsNullOrWhiteSpace(newUserName))
+            throw new ArgumentException("Username cannot be empty", nameof(newUserName));
+
+        UserName = newUserName;
+    }
+
     public void ChangePassword(string newPasswordHash) 
     { 
         PasswordHash = newPasswordHash; 
     }
-}
 
-public enum UserRole
-{
-    Reader = 1,
-    Author = 2,
-    Admin = 3
+    public void ChangePreferredLangugeId (Guid languageId)
+    {
+        if ( languageId == Guid.Empty)
+            throw new ArgumentException("Language can not be empty", nameof(languageId));
+
+        PreferredLanguageId = languageId;
+    }
+
+
 }

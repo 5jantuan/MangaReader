@@ -4,7 +4,7 @@ public class MangaCover
 {
     public Guid Id { get; private set; }
     public Guid MangaId { get; private set;}
-    public string Path { get; private set;}
+    public string Path { get; private set;} = null!;
     public bool IsPinned { get; private set;}
     public DateTime CreatedAt { get; private set;}
 

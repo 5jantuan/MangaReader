@@ -129,11 +129,20 @@ namespace MangaReader.Infrastructure.Persistence
             // =================== User ===================
             modelBuilder.Entity<User>(entity =>
             {
-                entity.HasKey(u => u.Id);
+            entity.HasKey(u => u.Id);
 
-                entity.Property(u => u.UserName).IsRequired();
-                entity.Property(u => u.CreatedAt)
-                      .HasDefaultValueSql("NOW()");
+            entity.Property(u => u.UserName).IsRequired();
+
+            entity.Property(u => u.PasswordHash).IsRequired();
+
+            entity.Property(u => u.PreferredLanguageId).IsRequired();
+
+            entity.Property(u => u.CreatedAt)
+                  .HasDefaultValueSql("NOW()");
+
+            entity.HasOne<Language>()
+                  .WithMany()
+                  .HasForeignKey(u => u.PreferredLanguageId);
             });
 
             // =================== MangaCover ===================

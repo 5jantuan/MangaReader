@@ -6,7 +6,7 @@ public class Chapter
     public Guid MangaId { get; private set; }
     public Manga Manga { get; private set; } = null!;
     public int Number { get; private set; }
-    public string Title { get; private set; }
+    public string Title { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; }
 
     private readonly List<Page> _pages = new();

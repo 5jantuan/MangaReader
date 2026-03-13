@@ -18,7 +18,9 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
-        var token = await _registerUserUseCase.Execute(request.UserName, request.Password);
+        var languageId = request.PreferredLanguageId ?? Guid.Empty;
+
+        var token = await _registerUserUseCase.Execute(request.UserName, request.Password, languageId);
         return Ok(new { Token = token });
     }
 
@@ -37,5 +39,5 @@ public class AuthController : ControllerBase
     }
 }
 
-public record RegisterRequest(string UserName, string Password);
-public record LoginRequest(string UserName, string Password);
+public record RegisterRequest(string UserName, string Password, Guid? PreferredLanguageId);
+public record LoginRequest(string UserName, string Password, Guid? PreferredLanguageId);

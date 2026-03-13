@@ -59,6 +59,7 @@ builder.Services.AddScoped<LoginUseCase>();
 builder.Services.AddScoped<RegisterUserUseCase>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
+builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 
 
 var app = builder.Build();

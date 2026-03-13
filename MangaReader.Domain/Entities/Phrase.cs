@@ -8,8 +8,8 @@ public class Phrase
 {
     public Guid Id { get; private set; }
     public Guid PageId { get; private set; }
-    public Page Page { get; private set; }
-    public string Text { get; private set; }
+    public Page Page { get; private set; } = null!;
+    public string Text { get; private set; } = null!;
     public decimal X { get; private set; }
     public decimal Y { get; private set; }
     public decimal Width { get; private set; }

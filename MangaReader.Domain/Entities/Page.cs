@@ -5,7 +5,7 @@ public class Page
     public Guid Id { get; private set; }
     public Guid ChapterId { get; private set; }
     public int Number { get; private set; }
-    public string ImagePath { get; private set; }
+    public string ImagePath { get; private set; } = null!;
     public Chapter Chapter { get; private set; } = null!;
     private readonly List<Phrase> _phrases = new();
     public IReadOnlyCollection<Phrase> Phrases => _phrases;
