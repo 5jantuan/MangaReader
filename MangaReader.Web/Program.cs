@@ -58,7 +58,8 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<LoginUseCase>();
 builder.Services.AddScoped<RegisterUserUseCase>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-
+builder.Services.AddScoped<FileService>();
+builder.Services.AddScoped<MangaService>();
 builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 
 

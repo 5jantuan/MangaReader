@@ -1,0 +1,17 @@
+@model MangaReader.Web.ViewModels.Chapter.CreateChapterViewModel
+
+<h2>Добавить главу</h2>
+
+<form asp-action="CreateChapter" method="post" enctype="multipart/form-data">
+
+    <input type="hidden" asp-for="MangaId" />
+
+    <input asp-for="Title" placeholder="Название главы" />
+
+    <input asp-for="Number" type="number" />
+
+    <input type="file" name="pages" multiple />
+
+    <button type="submit">Создать</button>
+
+</form>

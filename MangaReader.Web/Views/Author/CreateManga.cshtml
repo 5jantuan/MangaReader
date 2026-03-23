@@ -1,0 +1,16 @@
+@model MangaReader.Web.ViewModels.Manga.CreateMangaViewModel
+
+<h2>Создать мангу</h2>
+
+<form asp-action="CreateManga" method="post" enctype="multipart/form-data">
+
+    <input asp-for="Title" placeholder="Название" />
+    <span asp-validation-for="Title"></span>
+
+    <textarea asp-for="Description" placeholder="Описание"></textarea>
+
+    <input type="file" name="cover" />
+
+    <button type="submit">Создать</button>
+
+</form>

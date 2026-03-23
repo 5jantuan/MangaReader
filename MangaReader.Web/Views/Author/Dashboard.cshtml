@@ -1,0 +1,23 @@
+@model List<MangaReader.Web.Models.Manga.MangaDto>
+
+<h2>Мой кабинет</h2>
+
+<a href="/Author/CreateManga">Создать мангу</a>
+
+@foreach (var manga in Model)
+{
+    <div>
+        <h3>@manga.Title</h3>
+
+        <a href="/Author/CreateChapter?mangaId=@manga.Id">
+            Добавить главу
+        </a>
+
+        <ul>
+            @foreach (var chapter in manga.Chapters)
+            {
+                <li>Глава @chapter.Number: @chapter.Title</li>
+            }
+        </ul>
+    </div>
+}
