@@ -62,7 +62,8 @@ namespace MangaReader.Infrastructure.Persistence
 
                 entity.Property(c => c.Title).IsRequired();
                 entity.Property(c => c.Number).IsRequired();
-
+                entity.Property(c => c.Views).IsRequired();
+                
                 entity.Property(c => c.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 
@@ -70,6 +71,8 @@ namespace MangaReader.Infrastructure.Persistence
                       .WithOne(p => p.Chapter)
                       .HasForeignKey(p => p.ChapterId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                
             });
 
             // =================== Page ===================

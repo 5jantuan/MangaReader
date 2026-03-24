@@ -92,7 +92,7 @@ namespace MangaReader.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ReadChapter(Guid chapterId)
         {
-            var chapter = await _mangaService.GetChapterForReading(chapterId);
+            var chapter = await _mangaService.GetChapterForReadingAndIncrementViews(chapterId);
 
             if (chapter == null)
                 return NotFound();

@@ -37,15 +37,16 @@ namespace MangaReader.Web.Services
                     Chapters = m.Chapters
                         .OrderBy(c => c.Number)
                         .Select(c => new ChapterDto
-                        {
-                            Id = c.Id,
-                            Title = c.Title,
-                            Number = c.Number,
-                            Pages = c.Pages
-                                .OrderBy(p => p.Number)
-                                .Select(p => p.ImagePath)
-                                .ToList()
-                        })
+                            {
+                                Id = c.Id,
+                                Title = c.Title,
+                                Number = c.Number,
+                                Views = c.Views,
+                                Pages = c.Pages
+                                    .OrderBy(p => p.Number)
+                                    .Select(p => p.ImagePath)
+                                    .ToList()
+                            })
                         .ToList()
                 })
                 .ToListAsync();
@@ -100,6 +101,21 @@ namespace MangaReader.Web.Services
                     .ThenInclude(c => c.Pages)
                 .Include(m => m.Covers)
                 .FirstOrDefaultAsync(m => m.Id == mangaId);
+        }
+
+        public async Task<Chapter?> GetChapterForReadingAndIncrementViews(Guid chapterId)
+        {
+            var chapter = await _context.Chapters
+                .Include(c => c.Pages)
+                .FirstOrDefaultAsync(c => c.Id == chapterId);
+
+            if (chapter == null)
+                return null;
+
+            chapter.IncrementViews();
+            await _context.SaveChangesAsync();
+
+            return chapter;
         }
     }
 }
