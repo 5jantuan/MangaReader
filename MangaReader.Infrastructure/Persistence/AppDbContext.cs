@@ -17,6 +17,7 @@ namespace MangaReader.Infrastructure.Persistence
         public DbSet<PhraseTranslation> PhraseTranslations { get; set; } = null!;
         public DbSet<Language> Languages { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
+        public DbSet<MangaCover> MangaCovers { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +35,12 @@ namespace MangaReader.Infrastructure.Persistence
 
                 entity.Property(e => e.CreatedAt)
                       .HasDefaultValueSql("NOW()");
+
+                // СВЯЗЬ С АВТОРОМ (ВАЖНО)
+                entity.HasOne(m => m.Author)
+                      .WithMany()
+                      .HasForeignKey(m => m.AuthorId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
                 // Chapters
                 entity.HasMany(m => m.Chapters)
@@ -55,10 +62,10 @@ namespace MangaReader.Infrastructure.Persistence
 
                 entity.Property(c => c.Title).IsRequired();
                 entity.Property(c => c.Number).IsRequired();
+
                 entity.Property(c => c.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 
-                // Pages
                 entity.HasMany(c => c.Pages)
                       .WithOne(p => p.Chapter)
                       .HasForeignKey(p => p.ChapterId)
@@ -72,10 +79,10 @@ namespace MangaReader.Infrastructure.Persistence
 
                 entity.Property(p => p.Number).IsRequired();
                 entity.Property(p => p.ImagePath).IsRequired();
+
                 entity.Property(p => p.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 
-                // Phrases
                 entity.HasMany(p => p.Phrases)
                       .WithOne(ph => ph.Page)
                       .HasForeignKey(ph => ph.PageId)
@@ -88,6 +95,7 @@ namespace MangaReader.Infrastructure.Persistence
                 entity.HasKey(ph => ph.Id);
 
                 entity.Property(ph => ph.Text).IsRequired();
+
                 entity.Property(ph => ph.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 
@@ -103,6 +111,7 @@ namespace MangaReader.Infrastructure.Persistence
                 entity.HasKey(pt => pt.Id);
 
                 entity.Property(pt => pt.Text).IsRequired();
+
                 entity.Property(pt => pt.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 
@@ -129,20 +138,19 @@ namespace MangaReader.Infrastructure.Persistence
             // =================== User ===================
             modelBuilder.Entity<User>(entity =>
             {
-            entity.HasKey(u => u.Id);
+                entity.HasKey(u => u.Id);
 
-            entity.Property(u => u.UserName).IsRequired();
+                entity.Property(u => u.UserName).IsRequired();
+                entity.Property(u => u.PasswordHash).IsRequired();
+                entity.Property(u => u.PreferredLanguageId).IsRequired();
 
-            entity.Property(u => u.PasswordHash).IsRequired();
+                entity.Property(u => u.CreatedAt)
+                      .HasDefaultValueSql("NOW()");
 
-            entity.Property(u => u.PreferredLanguageId).IsRequired();
-
-            entity.Property(u => u.CreatedAt)
-                  .HasDefaultValueSql("NOW()");
-
-            entity.HasOne<Language>()
-                  .WithMany()
-                  .HasForeignKey(u => u.PreferredLanguageId);
+                entity.HasOne<Language>()
+                      .WithMany()
+                      .HasForeignKey(u => u.PreferredLanguageId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // =================== MangaCover ===================
@@ -152,6 +160,7 @@ namespace MangaReader.Infrastructure.Persistence
 
                 entity.Property(c => c.Path).IsRequired();
                 entity.Property(c => c.IsPinned).IsRequired();
+
                 entity.Property(c => c.CreatedAt)
                       .HasDefaultValueSql("NOW()");
             });

@@ -1,4 +1,5 @@
 namespace MangaReader.Web.Models.Manga;
+
 public class MangaDto
 {
     public Guid Id { get; set; }

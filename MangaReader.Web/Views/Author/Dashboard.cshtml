@@ -16,7 +16,10 @@
         <ul>
             @foreach (var chapter in manga.Chapters)
             {
-                <li>Глава @chapter.Number: @chapter.Title</li>
+                <li>
+                    Глава @chapter.Number: @chapter.Title 
+                    (страниц: @chapter.Pages.Count)
+                </li>
             }
         </ul>
     </div>

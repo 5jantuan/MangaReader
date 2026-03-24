@@ -5,7 +5,8 @@ public class Manga
     public Guid Id { get; private set; }
     public string Title { get; private set; } = null!;
     public string Description { get; private set; } = null!;
-    public Guid AuthorId { get; private set; }
+    public Guid AuthorId { get; set; }
+    public User Author { get; set; }
     private readonly List<MangaCover> _covers;
     private readonly List<Chapter> _chapters;
 
@@ -38,6 +39,17 @@ public class Manga
         _chapters = new();
     }
 
+    public static Manga Create(string title, string description, Guid authorId)
+    {
+        return new Manga
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Description = description,
+            AuthorId = authorId,
+            CreatedAt = DateTime.UtcNow
+        };
+    }
     // Метод для обновления информации
     public void UpdateInfo(string title, string description)
     {

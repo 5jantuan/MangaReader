@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using MangaReader.Application.UseCases;
-using MangaReader.Web.ViewModels.Manga;
+using MangaReader.Web.Services;
 using MangaReader.Web.ViewModels.Chapter;
+using MangaReader.Web.ViewModels.Manga;
 
+[Authorize]
 public class AuthorController : Controller
 {
     private readonly MangaService _mangaService;
@@ -15,9 +16,16 @@ public class AuthorController : Controller
         _fileService = fileService;
     }
 
+    private Guid GetCurrentUserId()
+    {
+        return Guid.Parse("11111111-1111-1111-1111-111111111111");
+    }
+
     public async Task<IActionResult> Dashboard()
     {
-        var mangas = _mangaService.GetMyMangas();
+        var userId = GetCurrentUserId();
+        var mangas = await _mangaService.GetMyMangas(userId);
+
         return View(mangas);
     }
 
@@ -27,17 +35,15 @@ public class AuthorController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateManga(CreateMangaViewModel model, IFormFile cover)
+    public async Task<IActionResult> CreateManga(CreateMangaViewModel model, IFormFile? cover)
     {
-        if (!ModelState.IsValid)
-            return View(model);
+        var userId = GetCurrentUserId();
 
         string? coverUrl = null;
-
         if (cover != null)
             coverUrl = await _fileService.SaveFile(cover);
 
-        await _mangaService.CreateManga(model, coverUrl);
+        await _mangaService.CreateManga(model, coverUrl, userId);
 
         return RedirectToAction("Dashboard");
     }
