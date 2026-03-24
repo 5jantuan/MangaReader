@@ -23,6 +23,7 @@ namespace MangaReader.Web.Services
                 .Include(m => m.Covers)
                 .Include(m => m.Chapters)
                     .ThenInclude(c => c.Pages)
+                .Include(m => m.Categories)
                 .Where(m => m.AuthorId == userId)
                 .OrderByDescending(m => m.CreatedAt)
                 .Select(m => new MangaDto
@@ -33,20 +34,24 @@ namespace MangaReader.Web.Services
                         .OrderByDescending(c => c.IsPinned)
                         .Select(c => c.Path)
                         .FirstOrDefault(),
+                    TotalViews = m.Chapters.Sum(c => c.Views),
+                    Categories = m.Categories
+                        .Select(c => c.Name)
+                        .ToList(),
 
                     Chapters = m.Chapters
                         .OrderBy(c => c.Number)
                         .Select(c => new ChapterDto
-                            {
-                                Id = c.Id,
-                                Title = c.Title,
-                                Number = c.Number,
-                                Views = c.Views,
-                                Pages = c.Pages
-                                    .OrderBy(p => p.Number)
-                                    .Select(p => p.ImagePath)
-                                    .ToList()
-                            })
+                        {
+                            Id = c.Id,
+                            Title = c.Title,
+                            Number = c.Number,
+                            Views = c.Views,
+                            Pages = c.Pages
+                                .OrderBy(p => p.Number)
+                                .Select(p => p.ImagePath)
+                                .ToList()
+                        })
                         .ToList()
                 })
                 .ToListAsync();
@@ -55,6 +60,15 @@ namespace MangaReader.Web.Services
         public async Task CreateManga(CreateMangaViewModel model, string? coverUrl, Guid userId)
         {
             var manga = Manga.Create(model.Title, model.Description, userId);
+
+            if (model.SelectedCategoryIds.Any())
+            {
+                var categories = await _context.Categories
+                    .Where(c => model.SelectedCategoryIds.Contains(c.Id))
+                    .ToListAsync();
+
+                manga.SetCategories(categories);
+            }
 
             _context.Mangas.Add(manga);
             await _context.SaveChangesAsync();
@@ -100,6 +114,7 @@ namespace MangaReader.Web.Services
                 .Include(m => m.Chapters)
                     .ThenInclude(c => c.Pages)
                 .Include(m => m.Covers)
+                .Include(m => m.Categories)
                 .FirstOrDefaultAsync(m => m.Id == mangaId);
         }
 
@@ -116,6 +131,19 @@ namespace MangaReader.Web.Services
             await _context.SaveChangesAsync();
 
             return chapter;
+        }
+
+        public async Task<List<CategoryOptionViewModel>> GetCategoriesForSelect()
+        {
+            return await _context.Categories
+                .AsNoTracking()
+                .OrderBy(c => c.Name)
+                .Select(c => new CategoryOptionViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name
+                })
+                .ToListAsync();
         }
     }
 }

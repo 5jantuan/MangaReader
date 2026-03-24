@@ -18,6 +18,7 @@ namespace MangaReader.Infrastructure.Persistence
         public DbSet<Language> Languages { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<MangaCover> MangaCovers { get; set; } = null!;
+        public DbSet<Category> Categories { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -53,6 +54,9 @@ namespace MangaReader.Infrastructure.Persistence
                       .WithOne()
                       .HasForeignKey(c => c.MangaId)
                       .OnDelete(DeleteBehavior.Cascade);
+                entity.HasMany(m => m.Categories)
+                        .WithMany(c => c.Mangas)
+                        .UsingEntity(j => j.ToTable("MangaCategories"));
             });
 
             // =================== Chapter ===================
@@ -171,6 +175,15 @@ namespace MangaReader.Infrastructure.Persistence
 
                 entity.Property(c => c.CreatedAt)
                       .HasDefaultValueSql("NOW()");
+            });
+
+            modelBuilder.Entity<Category>(entity =>
+            {
+            entity.HasKey(c => c.Id);
+
+            entity.Property(c => c.Name)
+                  .IsRequired()
+                  .HasMaxLength(100);
             });
         }
     }

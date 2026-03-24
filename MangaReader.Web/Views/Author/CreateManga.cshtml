@@ -3,14 +3,34 @@
 <h2>Создать мангу</h2>
 
 <form asp-action="CreateManga" method="post" enctype="multipart/form-data">
+    <div>
+        <label asp-for="Title">Название</label>
+        <input asp-for="Title" />
+    </div>
 
-    <input asp-for="Title" placeholder="Название" />
-    <span asp-validation-for="Title"></span>
+    <div>
+        <label asp-for="Description">Описание</label>
+        <textarea asp-for="Description"></textarea>
+    </div>
 
-    <textarea asp-for="Description" placeholder="Описание"></textarea>
+    <div>
+        <label>Категории</label>
+        @foreach (var category in Model.AvailableCategories)
+        {
+            <div>
+                <input type="checkbox"
+                       name="SelectedCategoryIds"
+                       value="@category.Id"
+                       @(Model.SelectedCategoryIds.Contains(category.Id) ? "checked" : null) />
+                <span>@category.Name</span>
+            </div>
+        }
+    </div>
 
-    <input type="file" name="cover" />
+    <div>
+        <label>Обложка</label>
+        <input type="file" name="cover" />
+    </div>
 
     <button type="submit">Создать</button>
-
 </form>

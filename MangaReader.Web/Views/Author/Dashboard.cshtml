@@ -24,6 +24,15 @@
 
         <h4>@manga.Title</h4>
 
+        <p><strong>Просмотров:</strong> @manga.TotalViews</p>
+
+        @if (manga.Categories.Any())
+        {
+            <p>
+                <strong>Категории:</strong> @string.Join(", ", manga.Categories)
+            </p>
+        }
+
         <div style="margin-bottom: 10px;">
             <a asp-controller="Author"
                asp-action="MangaDetails"

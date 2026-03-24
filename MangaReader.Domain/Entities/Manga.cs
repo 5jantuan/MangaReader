@@ -12,6 +12,8 @@ public class Manga
 
     public IReadOnlyCollection<MangaCover> Covers => _covers;
     public IReadOnlyCollection<Chapter> Chapters => _chapters;
+    private readonly List<Category> _categories;
+    public IReadOnlyCollection<Category> Categories => _categories;
 
     public DateTime CreatedAt { get; private set; }
 
@@ -20,6 +22,7 @@ public class Manga
     {
         _covers = new();
         _chapters = new();
+        _categories = new();
     }
 
     // Конструктор для создания новой манги
@@ -37,6 +40,7 @@ public class Manga
         CreatedAt = DateTime.UtcNow;
         _covers = new();
         _chapters = new();
+        _categories = new();
     }
 
     public static Manga Create(string title, string description, Guid authorId)
@@ -91,4 +95,11 @@ public class Manga
         coverToPin.Pin();
     }
 
+    public void SetCategories(IEnumerable<Category> categories)
+    {
+        _categories.Clear();
+
+        foreach (var category in categories)
+            _categories.Add(category);
+    }
 }

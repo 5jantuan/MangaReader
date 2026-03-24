@@ -9,4 +9,5 @@ public class AuthorProfileViewModel
     public string? InstagramUrl { get; set; }
     public string? TikTokUrl { get; set; }
     public int ProjectsCount { get; set; }
+    public int TotalViews { get; set; }
 }

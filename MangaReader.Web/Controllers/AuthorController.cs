@@ -45,16 +45,24 @@ namespace MangaReader.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult CreateManga()
+        public async Task<IActionResult> CreateManga()
         {
-            return View();
+            var model = new CreateMangaViewModel
+            {
+                AvailableCategories = await _mangaService.GetCategoriesForSelect()
+            };
+
+            return View(model);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateManga(CreateMangaViewModel model, IFormFile? cover)
         {
             if (!ModelState.IsValid)
+            {
+                model.AvailableCategories = await _mangaService.GetCategoriesForSelect();
                 return View(model);
+            }
 
             var userId = GetCurrentUserId();
 
@@ -121,6 +129,7 @@ namespace MangaReader.Web.Controllers
                 return NotFound();
 
             var mangas = await _mangaService.GetMyMangas(userId);
+            var totalViews = mangas.Sum(m => m.TotalViews);
 
             var model = new MangaReader.Web.ViewModels.Author.AuthorProfileViewModel
             {

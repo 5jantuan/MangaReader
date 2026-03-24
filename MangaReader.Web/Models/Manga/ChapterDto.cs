@@ -1,3 +1,5 @@
+namespace MangaReader.Web.Models.Manga;
+
 public class ChapterDto
 {
     public Guid Id { get; set; }
