@@ -1,0 +1,27 @@
+@model MangaReader.Web.ViewModels.Auth.RegisterViewModel
+
+<h2>Регистрация</h2>
+
+<form asp-action="Register" method="post">
+    <div>
+        <label asp-for="UserName">Имя пользователя</label>
+        <input asp-for="UserName" />
+        <span asp-validation-for="UserName"></span>
+    </div>
+
+    <div>
+        <label asp-for="Password">Пароль</label>
+        <input asp-for="Password" type="password" />
+        <span asp-validation-for="Password"></span>
+    </div>
+
+    <div>
+        <label asp-for="PreferredLanguageId">Предпочитаемый язык</label>
+        <input asp-for="PreferredLanguageId" />
+        <span asp-validation-for="PreferredLanguageId"></span>
+    </div>
+
+    <div asp-validation-summary="All"></div>
+
+    <button type="submit">Зарегистрироваться</button>
+</form>

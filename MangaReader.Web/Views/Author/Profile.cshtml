@@ -1,0 +1,35 @@
+@model MangaReader.Web.ViewModels.Author.AuthorProfileViewModel
+
+<h2>Профиль автора</h2>
+
+<div style="margin-bottom: 20px;">
+    @if (!string.IsNullOrWhiteSpace(Model.AvatarPath))
+    {
+        <img src="@Model.AvatarPath" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;" />
+    }
+    else
+    {
+        <div style="width:150px; height:150px; background:#ddd; border-radius:50%;"></div>
+    }
+</div>
+
+<p><strong>Имя:</strong> @Model.UserName</p>
+<p><strong>О себе:</strong> @Model.About</p>
+<p><strong>Проектов:</strong> @Model.ProjectsCount</p>
+
+@if (!string.IsNullOrWhiteSpace(Model.TelegramUrl))
+{
+    <p><strong>Telegram:</strong> <a href="@Model.TelegramUrl">@Model.TelegramUrl</a></p>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.InstagramUrl))
+{
+    <p><strong>Instagram:</strong> <a href="@Model.InstagramUrl">@Model.InstagramUrl</a></p>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.TikTokUrl))
+{
+    <p><strong>TikTok:</strong> <a href="@Model.TikTokUrl">@Model.TikTokUrl</a></p>
+}
+
+<a asp-controller="Author" asp-action="EditProfile">Редактировать профиль</a>

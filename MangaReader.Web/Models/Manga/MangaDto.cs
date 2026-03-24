@@ -6,4 +6,5 @@ public class MangaDto
     public string Title { get; set; }
 
     public List<ChapterDto> Chapters { get; set; } = new();
+    public string? CoverUrl { get; set; }
 }

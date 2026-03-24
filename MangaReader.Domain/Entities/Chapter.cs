@@ -7,6 +7,7 @@ public class Chapter
     public Manga Manga { get; private set; } = null!;
     public int Number { get; private set; }
     public string Title { get; private set; } = null!;
+    public int Views { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
     private readonly List<Page> _pages = new();
@@ -40,5 +41,10 @@ public class Chapter
             throw new ArgumentException("Title cannot be empty");
 
         Title = title;
+    }
+
+    public void IncrementViews()
+    {
+        Views++;
     }
 }

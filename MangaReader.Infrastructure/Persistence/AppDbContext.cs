@@ -143,6 +143,11 @@ namespace MangaReader.Infrastructure.Persistence
                 entity.Property(u => u.UserName).IsRequired();
                 entity.Property(u => u.PasswordHash).IsRequired();
                 entity.Property(u => u.PreferredLanguageId).IsRequired();
+                entity.Property(u => u.AvatarPath);
+                entity.Property(u => u.About);
+                entity.Property(u => u.TelegramUrl);
+                entity.Property(u => u.InstagramUrl);
+                entity.Property(u => u.TikTokUrl);
 
                 entity.Property(u => u.CreatedAt)
                       .HasDefaultValueSql("NOW()");

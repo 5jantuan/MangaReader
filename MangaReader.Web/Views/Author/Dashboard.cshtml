@@ -2,25 +2,33 @@
 
 <h2>Мой кабинет</h2>
 
-<a href="/Author/CreateManga">Создать мангу</a>
+<div style="margin-bottom: 20px;">
+    <a asp-controller="Author" asp-action="Profile">Мой профиль</a>
+</div>
 
+<a asp-controller="Author" asp-action="CreateManga">Создать мангу</a>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
 @foreach (var manga in Model)
 {
-    <div>
-        <h3>@manga.Title</h3>
+    <div style="border: 1px solid #ccc; padding: 10px; width: 200px;">
+        
+        @if (!string.IsNullOrEmpty(manga.CoverUrl))
+        {
+            <img src="@manga.CoverUrl" style="width: 100%; height: auto;" />
+        }
+        else
+        {
+            <div style="height: 250px; background: #eee;"></div>
+        }
 
-        <a href="/Author/CreateChapter?mangaId=@manga.Id">
-            Добавить главу
+        <h4>@manga.Title</h4>
+
+        <a asp-controller="Author"
+           asp-action="MangaDetails"
+           asp-route-mangaId="@manga.Id">
+            Открыть
         </a>
-
-        <ul>
-            @foreach (var chapter in manga.Chapters)
-            {
-                <li>
-                    Глава @chapter.Number: @chapter.Title 
-                    (страниц: @chapter.Pages.Count)
-                </li>
-            }
-        </ul>
     </div>
 }
+</div>

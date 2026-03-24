@@ -1,0 +1,10 @@
+@model MangaReader.Domain.Entities.Chapter
+
+<h2>@Model.Title</h2>
+
+@foreach (var p in Model.Pages.OrderBy(x => x.Number))
+{
+    <div style="margin-bottom: 16px;">
+        <img src="@p.ImagePath" style="max-width: 100%; height: auto;" />
+    </div>
+}

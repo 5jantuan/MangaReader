@@ -11,6 +11,11 @@ public class User
     public string UserName { get; private set; } = null!;
     public string PasswordHash { get; private set; } = null!;
     public Guid PreferredLanguageId { get; private set; }
+    public string? AvatarPath { get; private set; }
+    public string? About { get; private set; }
+    public string? TelegramUrl { get; private set; }
+    public string? InstagramUrl { get; private set; }
+    public string? TikTokUrl { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
     private readonly HashSet<UserRole> _roles = new();
@@ -71,5 +76,19 @@ public class User
         PreferredLanguageId = languageId;
     }
 
+    public void UpdateProfile(
+        string? about,
+        string? telegramUrl,
+        string? instagramUrl,
+        string? tikTokUrl,
+        string? avatarPath)
+    {
+        About = about;
+        TelegramUrl = telegramUrl;
+        InstagramUrl = instagramUrl;
+        TikTokUrl = tikTokUrl;
 
+        if (!string.IsNullOrWhiteSpace(avatarPath))
+            AvatarPath = avatarPath;
+    }
 }

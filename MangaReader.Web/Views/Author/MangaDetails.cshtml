@@ -1,0 +1,38 @@
+@model MangaReader.Domain.Entities.Manga
+
+<h2>@Model.Title</h2>
+
+@if (Model.Covers.Any())
+{
+    var cover = Model.Covers.FirstOrDefault(c => c.IsPinned) ?? Model.Covers.First();
+
+    <div style="margin-bottom: 20px;">
+        <img src="@cover.Path" style="max-width: 250px; height: auto;" />
+    </div>
+}
+
+<p>@Model.Description</p>
+
+<a asp-controller="Author"
+   asp-action="CreateChapter"
+   asp-route-mangaId="@Model.Id">
+    Добавить главу
+</a>
+
+<h3>Главы</h3>
+
+<ul>
+    @foreach (var chapter in Model.Chapters.OrderBy(c => c.Number))
+    {
+        <li>
+            Глава @chapter.Number: @chapter.Title
+            (страниц: @chapter.Pages.Count)
+
+            <a asp-controller="Author"
+               asp-action="ReadChapter"
+               asp-route-chapterId="@chapter.Id">
+                Читать
+            </a>
+        </li>
+    }
+</ul>

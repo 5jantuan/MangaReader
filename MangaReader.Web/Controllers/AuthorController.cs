@@ -1,71 +1,186 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using MangaReader.Web.Services;
 using MangaReader.Web.ViewModels.Chapter;
 using MangaReader.Web.ViewModels.Manga;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MangaReader.Domain.Interfaces;
 
-[Authorize]
-public class AuthorController : Controller
+namespace MangaReader.Web.Controllers
 {
-    private readonly MangaService _mangaService;
-    private readonly FileService _fileService;
-
-    public AuthorController(MangaService mangaService, FileService fileService)
+    [Authorize]
+    public class AuthorController : Controller
     {
-        _mangaService = mangaService;
-        _fileService = fileService;
-    }
+        private readonly MangaService _mangaService;
+        private readonly FileService _fileService;
+        private readonly IUserRepository _userRepository;
 
-    private Guid GetCurrentUserId()
-    {
-        return Guid.Parse("11111111-1111-1111-1111-111111111111");
-    }
 
-    public async Task<IActionResult> Dashboard()
-    {
-        var userId = GetCurrentUserId();
-        var mangas = await _mangaService.GetMyMangas(userId);
-
-        return View(mangas);
-    }
-
-    public IActionResult CreateManga()
-    {
-        return View();
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> CreateManga(CreateMangaViewModel model, IFormFile? cover)
-    {
-        var userId = GetCurrentUserId();
-
-        string? coverUrl = null;
-        if (cover != null)
-            coverUrl = await _fileService.SaveFile(cover);
-
-        await _mangaService.CreateManga(model, coverUrl, userId);
-
-        return RedirectToAction("Dashboard");
-    }
-
-    public IActionResult CreateChapter(Guid mangaId)
-    {
-        return View(new CreateChapterViewModel { MangaId = mangaId });
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> CreateChapter(CreateChapterViewModel model, List<IFormFile> pages)
-    {
-        var imageUrls = new List<string>();
-
-        foreach (var file in pages)
+        public AuthorController(
+            MangaService mangaService,
+            FileService fileService,
+            IUserRepository userRepository)
         {
-            var url = await _fileService.SaveFile(file);
-            imageUrls.Add(url);
+            _mangaService = mangaService;
+            _fileService = fileService;
+            _userRepository = userRepository;
         }
 
-        await _mangaService.CreateChapter(model, imageUrls);
+        private Guid GetCurrentUserId()
+        {
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        return RedirectToAction("Dashboard");
+            if (string.IsNullOrWhiteSpace(userIdValue))
+                throw new UnauthorizedAccessException("User is not authenticated.");
+
+            return Guid.Parse(userIdValue);
+        }
+
+        public async Task<IActionResult> Dashboard()
+        {
+            var userId = GetCurrentUserId();
+            var mangas = await _mangaService.GetMyMangas(userId);
+
+            return View(mangas);
+        }
+
+        [HttpGet]
+        public IActionResult CreateManga()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateManga(CreateMangaViewModel model, IFormFile? cover)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userId = GetCurrentUserId();
+
+            string? coverUrl = null;
+            if (cover != null)
+                coverUrl = await _fileService.SaveFile(cover);
+
+            await _mangaService.CreateManga(model, coverUrl, userId);
+
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet]
+        public IActionResult CreateChapter(Guid mangaId)
+        {
+            return View(new CreateChapterViewModel { MangaId = mangaId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateChapter(CreateChapterViewModel model, List<IFormFile> pages)
+        {
+            var imageUrls = new List<string>();
+
+            foreach (var file in pages)
+            {
+                var url = await _fileService.SaveFile(file);
+                imageUrls.Add(url);
+            }
+
+            await _mangaService.CreateChapter(model, imageUrls);
+
+            return RedirectToAction("Dashboard");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReadChapter(Guid chapterId)
+        {
+            var chapter = await _mangaService.GetChapterForReading(chapterId);
+
+            if (chapter == null)
+                return NotFound();
+
+            return View(chapter);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MangaDetails(Guid mangaId)
+        {
+            var manga = await _mangaService.GetMangaById(mangaId);
+
+            if (manga == null)
+                return NotFound();
+
+            return View(manga);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var userId = GetCurrentUserId();
+
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                return NotFound();
+
+            var mangas = await _mangaService.GetMyMangas(userId);
+
+            var model = new MangaReader.Web.ViewModels.Author.AuthorProfileViewModel
+            {
+                UserName = user.UserName,
+                AvatarPath = user.AvatarPath,
+                About = user.About,
+                TelegramUrl = user.TelegramUrl,
+                InstagramUrl = user.InstagramUrl,
+                TikTokUrl = user.TikTokUrl,
+                ProjectsCount = mangas.Count
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditProfile()
+        {
+            var userId = GetCurrentUserId();
+
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                return NotFound();
+
+            var model = new MangaReader.Web.ViewModels.Author.EditAuthorProfileViewModel
+            {
+                About = user.About,
+                TelegramUrl = user.TelegramUrl,
+                InstagramUrl = user.InstagramUrl,
+                TikTokUrl = user.TikTokUrl
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditProfile(
+            MangaReader.Web.ViewModels.Author.EditAuthorProfileViewModel model,
+            IFormFile? avatar)
+        {
+            var userId = GetCurrentUserId();
+
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                return NotFound();
+
+            string? avatarPath = null;
+            if (avatar != null)
+                avatarPath = await _fileService.SaveFile(avatar);
+
+            user.UpdateProfile(
+                model.About,
+                model.TelegramUrl,
+                model.InstagramUrl,
+                model.TikTokUrl,
+                avatarPath);
+
+            await _userRepository.UpdateAsync(user);
+
+            return RedirectToAction("Profile");
+        }
     }
 }

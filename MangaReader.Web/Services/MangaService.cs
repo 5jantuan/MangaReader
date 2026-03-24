@@ -20,6 +20,7 @@ namespace MangaReader.Web.Services
         {
             return await _context.Mangas
                 .AsNoTracking()
+                .Include(m => m.Covers)
                 .Include(m => m.Chapters)
                     .ThenInclude(c => c.Pages)
                 .Where(m => m.AuthorId == userId)
@@ -28,6 +29,11 @@ namespace MangaReader.Web.Services
                 {
                     Id = m.Id,
                     Title = m.Title,
+                    CoverUrl = m.Covers
+                        .OrderByDescending(c => c.IsPinned)
+                        .Select(c => c.Path)
+                        .FirstOrDefault(),
+
                     Chapters = m.Chapters
                         .OrderBy(c => c.Number)
                         .Select(c => new ChapterDto
@@ -66,13 +72,14 @@ namespace MangaReader.Web.Services
         {
             var manga = await _context.Mangas
                 .Include(m => m.Chapters)
-                    .ThenInclude(c => c.Pages)
                 .FirstOrDefaultAsync(m => m.Id == model.MangaId);
 
             if (manga == null)
                 throw new InvalidOperationException("Manga not found.");
 
-            manga.CreateChapter(model.Title, pagePaths);
+            var chapter = manga.CreateChapter(model.Title, pagePaths);
+
+            _context.Chapters.Add(chapter);
 
             await _context.SaveChangesAsync();
         }

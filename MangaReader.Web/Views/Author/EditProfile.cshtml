@@ -1,0 +1,32 @@
+@model MangaReader.Web.ViewModels.Author.EditAuthorProfileViewModel
+
+<h2>Редактировать профиль</h2>
+
+<form asp-action="EditProfile" method="post" enctype="multipart/form-data">
+    <div>
+        <label>Аватар</label>
+        <input type="file" name="avatar" />
+    </div>
+
+    <div>
+        <label asp-for="About">О себе</label>
+        <textarea asp-for="About"></textarea>
+    </div>
+
+    <div>
+        <label asp-for="TelegramUrl">Telegram</label>
+        <input asp-for="TelegramUrl" />
+    </div>
+
+    <div>
+        <label asp-for="InstagramUrl">Instagram</label>
+        <input asp-for="InstagramUrl" />
+    </div>
+
+    <div>
+        <label asp-for="TikTokUrl">TikTok</label>
+        <input asp-for="TikTokUrl" />
+    </div>
+
+    <button type="submit">Сохранить</button>
+</form>
