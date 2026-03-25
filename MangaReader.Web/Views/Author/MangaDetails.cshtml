@@ -92,6 +92,16 @@
                                            class="btn btn-sm btn-outline-primary">
                                             Читать
                                         </a>
+                                        <form asp-controller="Author"
+                                            asp-action="SeedDemoTranslation"
+                                            method="post"
+                                            class="d-inline">
+                                            <input type="hidden" name="chapterId" value="@chapter.Id" />
+                                            <input type="hidden" name="mangaId" value="@Model.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                                Загрузить демо-перевод
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             }

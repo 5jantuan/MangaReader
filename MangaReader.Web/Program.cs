@@ -39,6 +39,7 @@ builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<MangaService>();
+builder.Services.AddScoped<DemoTranslationSeeder>();
 
 // Application services
 builder.Services.AddScoped<IPhraseService, PhraseService>();

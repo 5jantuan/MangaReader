@@ -4,7 +4,34 @@
 
 @foreach (var p in Model.Pages.OrderBy(x => x.Number))
 {
-    <div style="margin-bottom: 16px;">
+    <div class="mb-4">
         <img src="@p.ImagePath" style="max-width: 100%; height: auto;" />
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6>Фразы</h6>
+
+                @if (p.Phrases.Any())
+                {
+                    <ul>
+                        @foreach (var phrase in p.Phrases)
+                        {
+                            <li>
+                                <strong>Original:</strong> @phrase.Text
+                                <br />
+                                @foreach (var tr in phrase.PhraseTranslations)
+                                {
+                                    <span><strong>RU:</strong> @tr.Text</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Фраз пока нет.</p>
+                }
+            </div>
+        </div>
     </div>
 }

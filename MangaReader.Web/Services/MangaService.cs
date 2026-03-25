@@ -104,6 +104,8 @@ namespace MangaReader.Web.Services
             return await _context.Chapters
                 .AsNoTracking()
                 .Include(c => c.Pages)
+                    .ThenInclude(p => p.Phrases)
+                        .ThenInclude(ph => ph.PhraseTranslations)
                 .FirstOrDefaultAsync(c => c.Id == chapterId);
         }
 
@@ -122,6 +124,8 @@ namespace MangaReader.Web.Services
         {
             var chapter = await _context.Chapters
                 .Include(c => c.Pages)
+                    .ThenInclude(p => p.Phrases)
+                        .ThenInclude(ph => ph.PhraseTranslations)
                 .FirstOrDefaultAsync(c => c.Id == chapterId);
 
             if (chapter == null)

@@ -14,16 +14,19 @@ namespace MangaReader.Web.Controllers
         private readonly MangaService _mangaService;
         private readonly FileService _fileService;
         private readonly IUserRepository _userRepository;
+        private readonly DemoTranslationSeeder _demoTranslationSeeder;
 
 
         public AuthorController(
             MangaService mangaService,
             FileService fileService,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            DemoTranslationSeeder demoTranslationSeeder)
         {
             _mangaService = mangaService;
             _fileService = fileService;
             _userRepository = userRepository;
+            _demoTranslationSeeder = demoTranslationSeeder;
         }
 
         private Guid GetCurrentUserId()
@@ -206,6 +209,16 @@ namespace MangaReader.Web.Controllers
             await _userRepository.UpdateAsync(user);
 
             return RedirectToAction("Profile");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SeedDemoTranslation(Guid chapterId, Guid mangaId)
+        {
+            var russianLanguageId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
+            await _demoTranslationSeeder.SeedFrierenDemoAsync(chapterId, russianLanguageId);
+
+            return RedirectToAction("MangaDetails", new { mangaId });
         }
     }
 }
