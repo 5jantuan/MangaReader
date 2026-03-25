@@ -145,5 +145,66 @@ namespace MangaReader.Web.Services
                 })
                 .ToListAsync();
         }
+
+        public async Task<MangaCatalogViewModel> GetCatalog(Guid? categoryId)
+        {
+            var query = _context.Mangas
+                .AsNoTracking()
+                .Include(m => m.Covers)
+                .Include(m => m.Categories)
+                .Include(m => m.Chapters)
+                .AsQueryable();
+
+            if (categoryId.HasValue)
+            {
+                query = query.Where(m => m.Categories.Any(c => c.Id == categoryId.Value));
+            }
+
+            var mangas = await query
+                .OrderByDescending(m => m.CreatedAt)
+                .Select(m => new MangaCatalogItemViewModel
+                {
+                    Id = m.Id,
+                    Title = m.Title,
+                    Description = m.Description,
+                    CoverUrl = m.Covers
+                        .OrderByDescending(c => c.IsPinned)
+                        .Select(c => c.Path)
+                        .FirstOrDefault(),
+                    TotalViews = m.Chapters.Sum(c => c.Views),
+                    Categories = m.Categories
+                        .Select(c => c.Name)
+                        .ToList()
+                })
+                .ToListAsync();
+
+            var categories = await _context.Categories
+                .AsNoTracking()
+                .OrderBy(c => c.Name)
+                .Select(c => new CategoryOptionViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name
+                })
+                .ToListAsync();
+
+            return new MangaCatalogViewModel
+            {
+                SelectedCategoryId = categoryId,
+                Categories = categories,
+                Mangas = mangas
+            };
+        }
+
+        public async Task<Manga?> GetPublicMangaById(Guid mangaId)
+        {
+            return await _context.Mangas
+                .AsNoTracking()
+                .Include(m => m.Covers)
+                .Include(m => m.Categories)
+                .Include(m => m.Chapters)
+                    .ThenInclude(c => c.Pages)
+                .FirstOrDefaultAsync(m => m.Id == mangaId);
+        }
     }
 }

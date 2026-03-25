@@ -36,12 +36,28 @@ namespace MangaReader.Web.Controllers
             return Guid.Parse(userIdValue);
         }
 
+        [HttpGet]
         public async Task<IActionResult> Dashboard()
         {
             var userId = GetCurrentUserId();
+
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                return NotFound();
+
             var mangas = await _mangaService.GetMyMangas(userId);
 
-            return View(mangas);
+            var model = new MangaReader.Web.ViewModels.Author.AuthorDashboardViewModel
+            {
+                UserName = user.UserName,
+                AvatarPath = user.AvatarPath,
+                ProjectsCount = mangas.Count,
+                ChaptersCount = mangas.Sum(m => m.Chapters.Count),
+                TotalViews = mangas.Sum(m => m.TotalViews),
+                Mangas = mangas
+            };
+
+            return View(model);
         }
 
         [HttpGet]

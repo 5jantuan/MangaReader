@@ -1,47 +1,108 @@
 @model MangaReader.Domain.Entities.Manga
 
-<h2>@Model.Title</h2>
+<div class="container py-4">
+    <div class="row g-4">
+        <div class="col-md-4 col-lg-3">
+            <div class="card shadow-sm">
+                @if (Model.Covers.Any())
+                {
+                    var cover = Model.Covers.FirstOrDefault(c => c.IsPinned) ?? Model.Covers.First();
 
-@if (Model.Covers.Any())
-{
-    var cover = Model.Covers.FirstOrDefault(c => c.IsPinned) ?? Model.Covers.First();
+                    <img src="@cover.Path"
+                         class="card-img-top"
+                         style="object-fit: cover; max-height: 420px;" />
+                }
+                else
+                {
+                    <div class="bg-light d-flex align-items-center justify-content-center"
+                         style="height: 420px;">
+                        <span class="text-muted">Нет обложки</span>
+                    </div>
+                }
+            </div>
+        </div>
 
-    <div style="margin-bottom: 20px;">
-        <img src="@cover.Path" style="max-width: 250px; height: auto;" />
+        <div class="col-md-8 col-lg-9">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h2 class="mb-2">@Model.Title</h2>
+
+                    @if (Model.Categories.Any())
+                    {
+                        <div class="mb-2">
+                            @foreach (var category in Model.Categories)
+                            {
+                                <span class="badge bg-secondary me-1 mb-1">@category.Name</span>
+                            }
+                        </div>
+                    }
+
+                    <p class="text-muted mb-1">
+                        Глав: @Model.Chapters.Count
+                    </p>
+                    <p class="text-muted mb-3">
+                        Просмотров: @Model.Chapters.Sum(c => c.Views)
+                    </p>
+                </div>
+
+                <div>
+                    <a asp-controller="Author"
+                       asp-action="CreateChapter"
+                       asp-route-mangaId="@Model.Id"
+                       class="btn btn-primary">
+                        Добавить главу
+                    </a>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Описание</h5>
+                    <p class="card-text">
+                        @(string.IsNullOrWhiteSpace(Model.Description)
+                            ? "Описание отсутствует."
+                            : Model.Description)
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Главы</h5>
+
+                    @if (Model.Chapters.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var chapter in Model.Chapters.OrderByDescending(c => c.Number))
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="fw-semibold">
+                                                Глава @chapter.Number: @chapter.Title
+                                            </div>
+                                            <small class="text-muted">
+                                                Страниц: @chapter.Pages.Count | Просмотров: @chapter.Views
+                                            </small>
+                                        </div>
+
+                                        <a asp-controller="Author"
+                                           asp-action="ReadChapter"
+                                           asp-route-chapterId="@chapter.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Читать
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Глав пока нет.</p>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
-}
-
-@if (Model.Categories.Any())
-{
-    <p>
-        <strong>Категории:</strong>
-        @string.Join(", ", Model.Categories.Select(c => c.Name))
-    </p>
-}
-
-<p>@Model.Description</p>
-
-<a asp-controller="Author"
-   asp-action="CreateChapter"
-   asp-route-mangaId="@Model.Id">
-    Добавить главу
-</a>
-
-<h3>Главы</h3>
-
-<ul>
-    @foreach (var chapter in Model.Chapters.OrderBy(c => c.Number))
-    {
-        <li>
-            Глава @chapter.Number: @chapter.Title
-            (страниц: @chapter.Pages.Count)
-            (просмотров: @chapter.Views)
-
-            <a asp-controller="Author"
-            asp-action="ReadChapter"
-            asp-route-chapterId="@chapter.Id">
-                Читать
-            </a>
-        </li>
-    }
-</ul>
+</div>

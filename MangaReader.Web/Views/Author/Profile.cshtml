@@ -1,35 +1,109 @@
 @model MangaReader.Web.ViewModels.Author.AuthorProfileViewModel
 
-<h2>Профиль автора</h2>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center gap-4">
+                        <div>
+                            @if (!string.IsNullOrWhiteSpace(Model.AvatarPath))
+                            {
+                                <img src="@Model.AvatarPath"
+                                     style="width: 140px; height: 140px; object-fit: cover; border-radius: 50%;" />
+                            }
+                            else
+                            {
+                                <div class="bg-light d-flex align-items-center justify-content-center rounded-circle"
+                                     style="width: 140px; height: 140px;">
+                                    <span class="text-muted">Нет фото</span>
+                                </div>
+                            }
+                        </div>
 
-<div style="margin-bottom: 20px;">
-    @if (!string.IsNullOrWhiteSpace(Model.AvatarPath))
-    {
-        <img src="@Model.AvatarPath" style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%;" />
-    }
-    else
-    {
-        <div style="width:150px; height:150px; background:#ddd; border-radius:50%;"></div>
-    }
+                        <div class="flex-grow-1">
+                            <h2 class="mb-1">@Model.UserName</h2>
+                            <p class="text-muted mb-2">Профиль автора</p>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-sm-6">
+                                    <div class="border rounded p-3 h-100">
+                                        <div class="text-muted small">Проектов</div>
+                                        <div class="fs-4 fw-semibold">@Model.ProjectsCount</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <div class="border rounded p-3 h-100">
+                                        <div class="text-muted small">Всего просмотров</div>
+                                        <div class="fs-4 fw-semibold">@Model.TotalViews</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <a asp-controller="Author"
+                               asp-action="EditProfile"
+                               class="btn btn-primary">
+                                Редактировать профиль
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">О себе</h5>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.About))
+                    {
+                        <p class="mb-0">@Model.About</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Информация о себе пока не заполнена.</p>
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Социальные сети</h5>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.TelegramUrl))
+                    {
+                        <p class="mb-2">
+                            <strong>Telegram:</strong>
+                            <a href="@Model.TelegramUrl" target="_blank">@Model.TelegramUrl</a>
+                        </p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.InstagramUrl))
+                    {
+                        <p class="mb-2">
+                            <strong>Instagram:</strong>
+                            <a href="@Model.InstagramUrl" target="_blank">@Model.InstagramUrl</a>
+                        </p>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.TikTokUrl))
+                    {
+                        <p class="mb-0">
+                            <strong>TikTok:</strong>
+                            <a href="@Model.TikTokUrl" target="_blank">@Model.TikTokUrl</a>
+                        </p>
+                    }
+
+                    @if (string.IsNullOrWhiteSpace(Model.TelegramUrl)
+                        && string.IsNullOrWhiteSpace(Model.InstagramUrl)
+                        && string.IsNullOrWhiteSpace(Model.TikTokUrl))
+                    {
+                        <p class="text-muted mb-0">Социальные сети пока не добавлены.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<p><strong>Имя:</strong> @Model.UserName</p>
-<p><strong>О себе:</strong> @Model.About</p>
-<p><strong>Проектов:</strong> @Model.ProjectsCount</p>
-
-@if (!string.IsNullOrWhiteSpace(Model.TelegramUrl))
-{
-    <p><strong>Telegram:</strong> <a href="@Model.TelegramUrl">@Model.TelegramUrl</a></p>
-}
-
-@if (!string.IsNullOrWhiteSpace(Model.InstagramUrl))
-{
-    <p><strong>Instagram:</strong> <a href="@Model.InstagramUrl">@Model.InstagramUrl</a></p>
-}
-
-@if (!string.IsNullOrWhiteSpace(Model.TikTokUrl))
-{
-    <p><strong>TikTok:</strong> <a href="@Model.TikTokUrl">@Model.TikTokUrl</a></p>
-}
-
-<a asp-controller="Author" asp-action="EditProfile">Редактировать профиль</a>

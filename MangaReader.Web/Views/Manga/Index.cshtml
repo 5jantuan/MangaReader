@@ -1,0 +1,100 @@
+@model MangaReader.Web.ViewModels.Manga.MangaCatalogViewModel
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Каталог манги</h2>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" asp-controller="Manga" asp-action="Index" class="row g-3 align-items-end">
+            <div class="col-md-6 col-lg-4">
+                <label class="form-label">Категория</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">Все</option>
+                    @foreach (var category in Model.Categories)
+                    {
+                        if (Model.SelectedCategoryId == category.Id)
+                        {
+                            <option value="@category.Id" selected>@category.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Фильтровать</button>
+            </div>
+
+            <div class="col-auto">
+                <a asp-controller="Manga" asp-action="Index" class="btn btn-outline-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Mangas.Any())
+{
+    <div class="row g-4">
+        @foreach (var manga in Model.Mangas)
+        {
+            <div class="col-md-6 col-lg-4 col-xl-3">
+                <div class="card h-100 shadow-sm">
+                    @if (!string.IsNullOrWhiteSpace(manga.CoverUrl))
+                    {
+                        <img src="@manga.CoverUrl"
+                             class="card-img-top"
+                             style="height: 320px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="bg-light d-flex align-items-center justify-content-center"
+                             style="height: 320px;">
+                            <span class="text-muted">Нет обложки</span>
+                        </div>
+                    }
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@manga.Title</h5>
+
+                        <p class="text-muted mb-2">👁 @manga.TotalViews просмотров</p>
+
+                        @if (manga.Categories.Any())
+                        {
+                            <div class="mb-3">
+                                @foreach (var category in manga.Categories)
+                                {
+                                    <span class="badge bg-secondary me-1 mb-1">@category</span>
+                                }
+                            </div>
+                        }
+
+                        <p class="card-text text-muted flex-grow-1">
+                            @(string.IsNullOrWhiteSpace(manga.Description)
+                                ? "Описание отсутствует."
+                                : manga.Description.Length > 120
+                                    ? manga.Description.Substring(0, 120) + "..."
+                                    : manga.Description)
+                        </p>
+
+                        <a asp-controller="Manga"
+                           asp-action="Details"
+                           asp-route-mangaId="@manga.Id"
+                           class="btn btn-outline-primary mt-2">
+                            Открыть
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-light border">
+        По выбранному фильтру манга не найдена.
+    </div>
+}
