@@ -1,5 +1,9 @@
 @model MangaReader.Domain.Entities.Chapter
 
+@{
+    Guid? preferredLanguageId = ViewBag.PreferredLanguageId as Guid?;
+}
+
 <h2 class="mb-4">@Model.Title</h2>
 
 @foreach (var p in Model.Pages.OrderBy(x => x.Number))
@@ -15,7 +19,10 @@
             {
                 @foreach (var phrase in phrases)
                 {
-                    var translation = phrase.PhraseTranslations?.FirstOrDefault();
+                    var translations = phrase.PhraseTranslations ?? Enumerable.Empty<MangaReader.Domain.Entities.PhraseTranslation>();
+
+                    var translation = translations.FirstOrDefault(t => preferredLanguageId.HasValue && t.LanguageId == preferredLanguageId.Value)
+                                   ?? translations.FirstOrDefault();
 
                     if (translation != null)
                     {
@@ -42,32 +49,34 @@
             }
         </div>
 
-        <div class="card mt-3">
-            <div class="card-body">
-                <h6>Отладочная информация</h6>
+        <details class="mt-3">
+            <summary>Отладочная информация</summary>
 
-                @if (phrases.Any())
-                {
-                    <ul class="mb-0">
-                        @foreach (var phrase in phrases)
-                        {
-                            <li>
-                                <strong>Original:</strong> @phrase.Text
-                                <br />
-                                @foreach (var tr in phrase.PhraseTranslations ?? Enumerable.Empty<MangaReader.Domain.Entities.PhraseTranslation>())
-                                {
-                                    <span><strong>Translation:</strong> @tr.Text</span>
+            <div class="card mt-2">
+                <div class="card-body">
+                    @if (phrases.Any())
+                    {
+                        <ul class="mb-0">
+                            @foreach (var phrase in phrases)
+                            {
+                                <li>
+                                    <strong>Original:</strong> @phrase.Text
                                     <br />
-                                }
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p class="text-muted mb-0">Фраз пока нет.</p>
-                }
+                                    @foreach (var tr in phrase.PhraseTranslations ?? Enumerable.Empty<MangaReader.Domain.Entities.PhraseTranslation>())
+                                    {
+                                        <span><strong>Translation:</strong> @tr.Text</span>
+                                        <br />
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Фраз пока нет.</p>
+                    }
+                </div>
             </div>
-        </div>
+        </details>
     </div>
 }

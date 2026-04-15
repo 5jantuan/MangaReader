@@ -129,6 +129,14 @@ namespace MangaReader.Web.Controllers
             if (chapter == null)
                 return NotFound();
 
+            var userId = GetCurrentUserId();
+            var user = await _userRepository.GetByIdAsync(userId);
+
+            if (user == null)
+                return NotFound();
+
+            ViewBag.PreferredLanguageId = user.PreferredLanguageId;
+
             return View(chapter);
         }
 
