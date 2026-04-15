@@ -15,7 +15,8 @@ public class FakeOcrService : IOcrService
                 X = 100,
                 Y = 120,
                 Width = 180,
-                Height = 50
+                Height = 50,
+                Confidence = 0.95m
             },
             new OcrPhraseDto
             {
@@ -23,7 +24,17 @@ public class FakeOcrService : IOcrService
                 X = 90,
                 Y = 220,
                 Width = 220,
-                Height = 60
+                Height = 60,
+                Confidence = 0.88m
+            },
+            new OcrPhraseDto
+            {
+                Text = ".",
+                X = 30,
+                Y = 40,
+                Width = 10,
+                Height = 10,
+                Confidence = 0.15m
             }
         };
 

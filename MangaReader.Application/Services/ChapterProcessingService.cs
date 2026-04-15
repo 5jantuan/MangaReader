@@ -46,6 +46,10 @@ public class ChapterProcessingService : IChapterProcessingService
             await _phraseRepository.RemoveByPageIdsAsync(pageIds);
             await _phraseRepository.SaveChangesAsync();
 
+            // TODO: later source language should come from Manga metadata.
+            // For now we temporarily assume Japanese as the source language.
+            const string sourceLanguageCode = "ja";
+
             foreach (var page in chapter.Pages.OrderBy(p => p.Number))
             {
                 var ocrPhrases = await _ocrService.ExtractPhrasesAsync(page.ImagePath);
@@ -55,9 +59,20 @@ public class ChapterProcessingService : IChapterProcessingService
                     if (string.IsNullOrWhiteSpace(ocrPhrase.Text))
                         continue;
 
+                    if (ocrPhrase.Width <= 0 || ocrPhrase.Height <= 0)
+                        continue;
+
+                    if (ocrPhrase.Confidence < 0.40m)
+                        continue;
+
+                    var cleanedText = ocrPhrase.Text.Trim();
+
+                    if (cleanedText.Length < 2)
+                        continue;
+
                     var phrase = new Phrase(
                         page.Id,
-                        ocrPhrase.Text,
+                        cleanedText,
                         ocrPhrase.X,
                         ocrPhrase.Y,
                         ocrPhrase.Width,
@@ -66,8 +81,8 @@ public class ChapterProcessingService : IChapterProcessingService
                     foreach (var language in languages)
                     {
                         var translatedText = await _translationService.TranslateAsync(
-                            ocrPhrase.Text,
-                            "ja",
+                            cleanedText,
+                            sourceLanguageCode,
                             language.Code);
 
                         phrase.AddTranslation(language, translatedText);

@@ -9,44 +9,65 @@
 @foreach (var p in Model.Pages.OrderBy(x => x.Number))
 {
     var phrases = p.Phrases?.ToList() ?? new List<MangaReader.Domain.Entities.Phrase>();
+    var pageContainerId = $"page-container-{p.Id}";
+    var imageId = $"page-image-{p.Id}";
+    var overlayId = $"page-overlay-{p.Id}";
 
     <div class="mb-5">
-        <div style="position: relative; display: inline-block; max-width: 100%;">
-            <img src="@p.ImagePath"
+        <div id="@pageContainerId"
+             class="reader-page-container"
+             style="position: relative; display: inline-block; max-width: 100%;">
+            
+            <img id="@imageId"
+                 src="@p.ImagePath"
+                 class="reader-page-image"
                  style="max-width: 100%; height: auto; display: block;" />
 
-            @if (phrases.Any())
-            {
-                @foreach (var phrase in phrases)
+            <div id="@overlayId"
+                 class="reader-page-overlay"
+                 style="position: absolute; inset: 0; pointer-events: none;">
+                
+                @if (phrases.Any())
                 {
-                    var translations = phrase.PhraseTranslations ?? Enumerable.Empty<MangaReader.Domain.Entities.PhraseTranslation>();
-
-                    var translation = translations.FirstOrDefault(t => preferredLanguageId.HasValue && t.LanguageId == preferredLanguageId.Value)
-                                   ?? translations.FirstOrDefault();
-
-                    if (translation != null)
+                    @foreach (var phrase in phrases)
                     {
-                        <div style="
-                            position: absolute;
-                            left: @(phrase.X)px;
-                            top: @(phrase.Y)px;
-                            width: @(phrase.Width)px;
-                            min-height: @(phrase.Height)px;
-                            background: rgba(255, 255, 255, 0.85);
-                            border: 1px solid rgba(0,0,0,0.15);
-                            border-radius: 6px;
-                            padding: 4px 6px;
-                            font-size: 12px;
-                            line-height: 1.2;
-                            overflow-wrap: break-word;
-                            word-break: break-word;
-                            box-sizing: border-box;
-                            z-index: 2;">
-                            @translation.Text
-                        </div>
+                        var translations = phrase.PhraseTranslations ?? Enumerable.Empty<MangaReader.Domain.Entities.PhraseTranslation>();
+
+                        var translation = translations.FirstOrDefault(t => preferredLanguageId.HasValue && t.LanguageId == preferredLanguageId.Value)
+                                       ?? translations.FirstOrDefault();
+
+                        if (translation != null)
+                        {
+                            <div class="phrase-box"
+                                 data-x="@phrase.X"
+                                 data-y="@phrase.Y"
+                                 data-width="@phrase.Width"
+                                 data-height="@phrase.Height"
+                                 style="
+                                     position: absolute;
+                                     background: rgba(255, 255, 255, 0.88);
+                                     border: 1px solid rgba(0,0,0,0.12);
+                                     border-radius: 8px;
+                                     padding: 4px 6px;
+                                     font-size: 11px;
+                                     line-height: 1.15;
+                                     overflow: hidden;
+                                     overflow-wrap: break-word;
+                                     word-break: break-word;
+                                     box-sizing: border-box;
+                                     z-index: 2;
+                                     display: flex;
+                                     align-items: center;
+                                     justify-content: center;
+                                     text-align: center;
+                                     pointer-events: auto;"
+                                 title="@translation.Text">
+                                @translation.Text
+                            </div>
+                        }
                     }
                 }
-            }
+            </div>
         </div>
 
         <details class="mt-3">
@@ -80,3 +101,55 @@
         </details>
     </div>
 }
+
+<script>
+    function updatePhraseBoxes() {
+        const containers = document.querySelectorAll('.reader-page-container');
+
+        containers.forEach(container => {
+            const image = container.querySelector('.reader-page-image');
+            const overlay = container.querySelector('.reader-page-overlay');
+            const boxes = container.querySelectorAll('.phrase-box');
+
+            if (!image || !overlay || !boxes.length) {
+                return;
+            }
+
+            const displayedWidth = image.clientWidth;
+            const displayedHeight = image.clientHeight;
+
+            if (!displayedWidth || !displayedHeight) {
+                return;
+            }
+
+            overlay.style.width = displayedWidth + 'px';
+            overlay.style.height = displayedHeight + 'px';
+
+            const naturalWidth = image.naturalWidth;
+            const naturalHeight = image.naturalHeight;
+
+            if (!naturalWidth || !naturalHeight) {
+                return;
+            }
+
+            const scaleX = displayedWidth / naturalWidth;
+            const scaleY = displayedHeight / naturalHeight;
+
+            boxes.forEach(box => {
+                const x = parseFloat(box.dataset.x || '0');
+                const y = parseFloat(box.dataset.y || '0');
+                const width = parseFloat(box.dataset.width || '0');
+                const height = parseFloat(box.dataset.height || '0');
+
+                box.style.left = (x * scaleX) + 'px';
+                box.style.top = (y * scaleY) + 'px';
+                box.style.width = Math.max(width * scaleX, 40) + 'px';
+                box.style.minHeight = Math.max(height * scaleY, 20) + 'px';
+                box.style.maxHeight = Math.max(height * scaleY * 2, 40) + 'px';
+            });
+        });
+    }
+
+    window.addEventListener('load', updatePhraseBoxes);
+    window.addEventListener('resize', updatePhraseBoxes);
+</script>
