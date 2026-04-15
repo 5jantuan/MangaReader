@@ -9,4 +9,5 @@ public interface ILanguageRepository
 {
     Task<Language> GetLanguageByIdAsync(Guid id);
     Task<Language> GetDefaultLanguageAsync();
+    Task<List<Language>> GetAllAsync();
 }

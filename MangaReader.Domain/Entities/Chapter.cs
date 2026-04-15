@@ -1,3 +1,5 @@
+using MangaReader.Domain.Enums;
+
 namespace MangaReader.Domain.Entities;
 
 public class Chapter
@@ -12,6 +14,8 @@ public class Chapter
 
     private readonly List<Page> _pages = new();
     public IReadOnlyCollection<Page> Pages => _pages;
+
+    public ProcessingStatus ProcessingStatus { get; private set; } = ProcessingStatus.Pending;
 
     protected Chapter() { }
 
@@ -46,5 +50,20 @@ public class Chapter
     public void IncrementViews()
     {
         Views++;
+    }
+
+    public void MarkAsProcessing()
+    {
+        ProcessingStatus = ProcessingStatus.Processing;
+    }
+
+    public void MarkAsCompleted()
+    {
+        ProcessingStatus = ProcessingStatus.Completed;
+    }
+
+    public void MarkAsFailed()
+    {
+        ProcessingStatus = ProcessingStatus.Failed;
     }
 }

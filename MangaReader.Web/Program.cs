@@ -5,6 +5,8 @@ using MangaReader.Domain.Interfaces;
 using MangaReader.Infrastructure.Persistence;
 using MangaReader.Infrastructure.Repositories;
 using MangaReader.Infrastructure.Security;
+using MangaReader.Infrastructure.Ocr;
+using MangaReader.Infrastructure.Translation;
 using MangaReader.Web.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +35,7 @@ builder.Services
 builder.Services.AddScoped<IPhraseRepository, PhraseRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
+builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
 
 // Infrastructure services
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
@@ -40,6 +43,9 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<MangaService>();
 builder.Services.AddScoped<DemoTranslationSeeder>();
+builder.Services.AddScoped<IOcrService, FakeOcrService>();
+builder.Services.AddScoped<ITranslationService, FakeTranslationService>();
+builder.Services.AddScoped<IChapterProcessingService, ChapterProcessingService>();
 
 // Application services
 builder.Services.AddScoped<IPhraseService, PhraseService>();

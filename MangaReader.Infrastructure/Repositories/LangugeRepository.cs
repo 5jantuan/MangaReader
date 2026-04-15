@@ -32,4 +32,9 @@ public class LanguageRepository : ILanguageRepository
             .FirstOrDefaultAsync()
             ?? throw new InvalidOperationException("No languages configured");
     }
+
+    public async Task<List<Language>> GetAllAsync()
+    {
+        return await _dbContext.Languages.ToListAsync();
+    }
 }
