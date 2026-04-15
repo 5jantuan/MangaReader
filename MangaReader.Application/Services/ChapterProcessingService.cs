@@ -41,12 +41,20 @@ public class ChapterProcessingService : IChapterProcessingService
 
         try
         {
+            var pageIds = chapter.Pages.Select(p => p.Id).ToList();
+
+            await _phraseRepository.RemoveByPageIdsAsync(pageIds);
+            await _phraseRepository.SaveChangesAsync();
+
             foreach (var page in chapter.Pages.OrderBy(p => p.Number))
             {
                 var ocrPhrases = await _ocrService.ExtractPhrasesAsync(page.ImagePath);
 
                 foreach (var ocrPhrase in ocrPhrases)
                 {
+                    if (string.IsNullOrWhiteSpace(ocrPhrase.Text))
+                        continue;
+
                     var phrase = new Phrase(
                         page.Id,
                         ocrPhrase.Text,
@@ -74,9 +82,9 @@ public class ChapterProcessingService : IChapterProcessingService
             chapter.MarkAsCompleted();
             await _chapterRepository.UpdateAsync(chapter);
         }
-        catch
+        catch (Exception ex)
         {
-            chapter.MarkAsFailed();
+            chapter.MarkAsFailed(ex.Message);
             await _chapterRepository.UpdateAsync(chapter);
             throw;
         }

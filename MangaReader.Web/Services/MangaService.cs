@@ -83,7 +83,7 @@ namespace MangaReader.Web.Services
             }
         }
 
-        public async Task CreateChapter(CreateChapterViewModel model, List<string> pagePaths)
+        public async Task<Guid> CreateChapter(CreateChapterViewModel model, List<string> pagePaths)
         {
             var manga = await _context.Mangas
                 .Include(m => m.Chapters)
@@ -97,6 +97,8 @@ namespace MangaReader.Web.Services
             _context.Chapters.Add(chapter);
 
             await _context.SaveChangesAsync();
+
+            return chapter.Id;
         }
 
         public async Task<Chapter?> GetChapterForReading(Guid chapterId)

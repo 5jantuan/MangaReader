@@ -16,12 +16,15 @@ public class PhraseRepository : IPhraseRepository
 
     public async Task<Phrase?> GetByIdAsync(Guid id)
     {
-        return await _context.Phrases.FindAsync(id);
+        return await _context.Phrases
+            .Include(p => p.PhraseTranslations)
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<IReadOnlyList<Phrase>> GetByPageIdAsync(Guid pageId)
     {
         return await _context.Phrases
+            .Include(p => p.PhraseTranslations)
             .Where(p => p.PageId == pageId)
             .ToListAsync();
     }
@@ -29,24 +32,31 @@ public class PhraseRepository : IPhraseRepository
     public async Task AddAsync(Phrase phrase)
     {
         await _context.Phrases.AddAsync(phrase);
-        await _context.SaveChangesAsync();
     }
 
-    public async Task RemoveAsync(Phrase phrase)
+    public Task RemoveAsync(Phrase phrase)
     {
         _context.Phrases.Remove(phrase);
-        await _context.SaveChangesAsync();
+        return Task.CompletedTask;
     }
 
-    public async Task UpdateAsync(Phrase phrase)
+    public Task UpdateAsync(Phrase phrase)
     {
-        _context.Phrases.Update(phrase); // помечаем сущность как изменённую
-        await _context.SaveChangesAsync(); // сохраняем изменения в БД
+        _context.Phrases.Update(phrase);
+        return Task.CompletedTask;
+    }
+
+    public async Task RemoveByPageIdsAsync(IEnumerable<Guid> pageIds)
+    {
+        var phrases = await _context.Phrases
+            .Where(p => pageIds.Contains(p.PageId))
+            .ToListAsync();
+
+        _context.Phrases.RemoveRange(phrases);
     }
 
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();
     }
-
 }

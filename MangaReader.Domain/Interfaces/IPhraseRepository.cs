@@ -10,4 +10,5 @@ public interface IPhraseRepository
     Task RemoveAsync(Phrase phrase);
     Task UpdateAsync(Phrase phrase);
     Task SaveChangesAsync();
+    Task RemoveByPageIdsAsync(IEnumerable<Guid> pageIds);
 }

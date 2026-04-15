@@ -5,6 +5,7 @@ using MangaReader.Web.ViewModels.Manga;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MangaReader.Domain.Interfaces;
+using MangaReader.Application.Interfaces;
 
 namespace MangaReader.Web.Controllers
 {
@@ -15,18 +16,20 @@ namespace MangaReader.Web.Controllers
         private readonly FileService _fileService;
         private readonly IUserRepository _userRepository;
         private readonly DemoTranslationSeeder _demoTranslationSeeder;
-
+        private readonly IChapterProcessingService _chapterProcessingService;
 
         public AuthorController(
             MangaService mangaService,
             FileService fileService,
             IUserRepository userRepository,
-            DemoTranslationSeeder demoTranslationSeeder)
+            DemoTranslationSeeder demoTranslationSeeder,
+            IChapterProcessingService chapterProcessingService)
         {
             _mangaService = mangaService;
             _fileService = fileService;
             _userRepository = userRepository;
             _demoTranslationSeeder = demoTranslationSeeder;
+            _chapterProcessingService = chapterProcessingService;
         }
 
         private Guid GetCurrentUserId()
@@ -111,7 +114,9 @@ namespace MangaReader.Web.Controllers
                 imageUrls.Add(url);
             }
 
-            await _mangaService.CreateChapter(model, imageUrls);
+            var chapterId = await _mangaService.CreateChapter(model, imageUrls);
+
+            await _chapterProcessingService.ProcessChapterAsync(chapterId);
 
             return RedirectToAction("Dashboard");
         }

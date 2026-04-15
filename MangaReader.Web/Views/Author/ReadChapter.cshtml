@@ -1,27 +1,63 @@
 @model MangaReader.Domain.Entities.Chapter
 
-<h2>@Model.Title</h2>
+<h2 class="mb-4">@Model.Title</h2>
 
 @foreach (var p in Model.Pages.OrderBy(x => x.Number))
 {
-    <div class="mb-4">
-        <img src="@p.ImagePath" style="max-width: 100%; height: auto;" />
+    var phrases = p.Phrases?.ToList() ?? new List<MangaReader.Domain.Entities.Phrase>();
+
+    <div class="mb-5">
+        <div style="position: relative; display: inline-block; max-width: 100%;">
+            <img src="@p.ImagePath"
+                 style="max-width: 100%; height: auto; display: block;" />
+
+            @if (phrases.Any())
+            {
+                @foreach (var phrase in phrases)
+                {
+                    var translation = phrase.PhraseTranslations?.FirstOrDefault();
+
+                    if (translation != null)
+                    {
+                        <div style="
+                            position: absolute;
+                            left: @(phrase.X)px;
+                            top: @(phrase.Y)px;
+                            width: @(phrase.Width)px;
+                            min-height: @(phrase.Height)px;
+                            background: rgba(255, 255, 255, 0.85);
+                            border: 1px solid rgba(0,0,0,0.15);
+                            border-radius: 6px;
+                            padding: 4px 6px;
+                            font-size: 12px;
+                            line-height: 1.2;
+                            overflow-wrap: break-word;
+                            word-break: break-word;
+                            box-sizing: border-box;
+                            z-index: 2;">
+                            @translation.Text
+                        </div>
+                    }
+                }
+            }
+        </div>
 
         <div class="card mt-3">
             <div class="card-body">
-                <h6>Фразы</h6>
+                <h6>Отладочная информация</h6>
 
-                @if (p.Phrases.Any())
+                @if (phrases.Any())
                 {
-                    <ul>
-                        @foreach (var phrase in p.Phrases)
+                    <ul class="mb-0">
+                        @foreach (var phrase in phrases)
                         {
                             <li>
                                 <strong>Original:</strong> @phrase.Text
                                 <br />
-                                @foreach (var tr in phrase.PhraseTranslations)
+                                @foreach (var tr in phrase.PhraseTranslations ?? Enumerable.Empty<MangaReader.Domain.Entities.PhraseTranslation>())
                                 {
-                                    <span><strong>RU:</strong> @tr.Text</span>
+                                    <span><strong>Translation:</strong> @tr.Text</span>
+                                    <br />
                                 }
                             </li>
                         }

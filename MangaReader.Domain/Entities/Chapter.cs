@@ -16,6 +16,9 @@ public class Chapter
     public IReadOnlyCollection<Page> Pages => _pages;
 
     public ProcessingStatus ProcessingStatus { get; private set; } = ProcessingStatus.Pending;
+    public DateTime? ProcessedAt { get; private set; }
+    public string? ProcessingError { get; private set; }
+
 
     protected Chapter() { }
 
@@ -55,15 +58,19 @@ public class Chapter
     public void MarkAsProcessing()
     {
         ProcessingStatus = ProcessingStatus.Processing;
+        ProcessingError = null;
     }
 
     public void MarkAsCompleted()
     {
         ProcessingStatus = ProcessingStatus.Completed;
+        ProcessedAt = DateTime.UtcNow;
+        ProcessingError = null;
     }
 
-    public void MarkAsFailed()
+    public void MarkAsFailed(string error)
     {
         ProcessingStatus = ProcessingStatus.Failed;
+        ProcessingError = error;
     }
 }
