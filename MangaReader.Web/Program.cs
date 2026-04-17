@@ -37,13 +37,18 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
 
+
+builder.Services.AddHttpClient<IOcrService, HttpOcrService>(client =>
+{
+    client.BaseAddress = new Uri("http://127.0.0.1:8001");
+});
+
 // Infrastructure services
 builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<MangaService>();
 builder.Services.AddScoped<DemoTranslationSeeder>();
-builder.Services.AddScoped<IOcrService, FakeOcrService>();
 builder.Services.AddScoped<ITranslationService, FakeTranslationService>();
 builder.Services.AddScoped<IChapterProcessingService, ChapterProcessingService>();
 
