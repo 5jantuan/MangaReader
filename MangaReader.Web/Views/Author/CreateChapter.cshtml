@@ -23,13 +23,15 @@
 
                         <div class="mb-3">
                             <label asp-for="Number" class="form-label">Номер главы</label>
-                            <input asp-for="Number" type="number" class="form-control" />
-                            <span asp-validation-for="Number" class="text-danger"></span>
+                            <input asp-for="Number" type="number" class="form-control" readonly />
+                            <div class="form-text">
+                                Номер главы назначается автоматически.
+                            </div>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label">Страницы</label>
-                            <input type="file" name="pages" class="form-control" multiple />
+                            <label asp-for="Pages" class="form-label">Страницы</label>
+                            <input asp-for="Pages" type="file" class="form-control" multiple accept="image/*" />
                             <div class="form-text">Можно выбрать сразу несколько изображений.</div>
                         </div>
 

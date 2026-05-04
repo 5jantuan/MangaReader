@@ -116,6 +116,7 @@
                                class="btn btn-sm btn-primary">
                                 Добавить главу
                             </a>
+                            
                         </div>
 
                         @if (manga.Chapters.Any())
@@ -136,6 +137,12 @@
                                                asp-route-chapterId="@chapter.Id"
                                                class="btn btn-link btn-sm p-0">
                                                 Читать
+                                            </a>
+                                            <a asp-controller="Author"
+                                                asp-action="ChapterStatus"
+                                                asp-route-chapterId="@chapter.Id"
+                                                class="btn btn-sm btn-outline-primary">
+                                                    Статус обработки
                                             </a>
                                         </div>
                                     </li>

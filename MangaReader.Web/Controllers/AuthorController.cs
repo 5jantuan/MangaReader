@@ -5,6 +5,7 @@ using MangaReader.Web.ViewModels.Manga;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MangaReader.Domain.Interfaces;
+using MangaReader.Domain.Enums;
 using MangaReader.Application.Interfaces;
 
 namespace MangaReader.Web.Controllers
@@ -17,19 +18,25 @@ namespace MangaReader.Web.Controllers
         private readonly IUserRepository _userRepository;
         private readonly DemoTranslationSeeder _demoTranslationSeeder;
         private readonly IChapterProcessingService _chapterProcessingService;
+        private readonly IChapterProcessingQueue _chapterProcessingQueue;
+        private readonly IChapterRepository _chapterRepository;
 
         public AuthorController(
             MangaService mangaService,
             FileService fileService,
             IUserRepository userRepository,
             DemoTranslationSeeder demoTranslationSeeder,
-            IChapterProcessingService chapterProcessingService)
+            IChapterProcessingService chapterProcessingService,
+            IChapterProcessingQueue chapterProcessingQueue,
+            IChapterRepository chapterRepository)
         {
             _mangaService = mangaService;
             _fileService = fileService;
             _userRepository = userRepository;
             _demoTranslationSeeder = demoTranslationSeeder;
             _chapterProcessingService = chapterProcessingService;
+            _chapterProcessingQueue = chapterProcessingQueue;
+            _chapterRepository = chapterRepository;
         }
 
         private Guid GetCurrentUserId()
@@ -98,14 +105,41 @@ namespace MangaReader.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult CreateChapter(Guid mangaId)
+        public async Task<IActionResult> CreateChapter(Guid mangaId)
         {
-            return View(new CreateChapterViewModel { MangaId = mangaId });
+            var manga = await _mangaService.GetMangaById(mangaId);
+
+            if (manga == null)
+                return NotFound();
+
+            var nextNumber = manga.Chapters.Any()
+                ? manga.Chapters.Max(c => c.Number) + 1
+                : 1;
+
+            var model = new CreateChapterViewModel
+            {
+                MangaId = mangaId,
+                Number = nextNumber
+            };
+
+            return View(model);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateChapter(CreateChapterViewModel model, List<IFormFile> pages)
         {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var manga = await _mangaService.GetMangaById(model.MangaId);
+
+            if (manga == null)
+                return NotFound();
+
+            model.Number = manga.Chapters.Any()
+                ? manga.Chapters.Max(c => c.Number) + 1
+                : 1;
+
             var imageUrls = new List<string>();
 
             foreach (var file in pages)
@@ -116,9 +150,71 @@ namespace MangaReader.Web.Controllers
 
             var chapterId = await _mangaService.CreateChapter(model, imageUrls);
 
+            return RedirectToAction("ReviewChapterPages", new { chapterId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReviewChapterPages(Guid chapterId)
+        {
+            var chapter = await _chapterRepository.GetByIdWithPagesAsync(chapterId);
+
+            if (chapter == null)
+                return NotFound();
+
+            var model = new ReviewChapterPagesViewModel
+            {
+                ChapterId = chapter.Id,
+                ChapterTitle = chapter.Title,
+                ChapterNumber = chapter.Number,
+                Pages = chapter.Pages
+                    .OrderBy(p => p.Number)
+                    .Select(p => new ReviewPageViewModel
+                    {
+                        PageId = p.Id,
+                        Number = p.Number,
+                        ImagePath = p.ImagePath
+                    })
+                    .ToList()
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ConfirmChapterPages(Guid chapterId)
+        {
             await _chapterProcessingService.ProcessChapterAsync(chapterId);
 
-            return RedirectToAction("Dashboard");
+            return RedirectToAction("ChapterStatus", new { chapterId });
+        }
+
+        public async Task<IActionResult> ChapterStatus(Guid chapterId)
+        {
+            var chapter = await _chapterRepository.GetByIdWithPagesAsync(chapterId);
+
+            if (chapter == null)
+                return NotFound();
+
+            var model = new ChapterProcessingStatusViewModel
+            {
+                ChapterId = chapter.Id,
+                ChapterTitle = chapter.Title,
+                ChapterStatus = chapter.ProcessingStatus,
+                TotalPages = chapter.Pages.Count,
+                CompletedPages = chapter.Pages.Count(p => p.ProcessingStatus == PageProcessingStatus.Completed),
+                Pages = chapter.Pages
+                    .OrderBy(p => p.Number)
+                    .Select(p => new PageProcessingStatusViewModel
+                    {
+                        PageId = p.Id,
+                        Number = p.Number,
+                        ImagePath = p.ImagePath,
+                        Status = p.ProcessingStatus
+                    })
+                    .ToList()
+            };
+
+            return View(model);
         }
 
         [HttpGet]

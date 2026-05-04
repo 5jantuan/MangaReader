@@ -14,6 +14,7 @@ public class Phrase
     public decimal Y { get; private set; }
     public decimal Width { get; private set; }
     public decimal Height { get; private set; }
+    public decimal Confidence { get; private set; }
     private readonly List<PhraseTranslation> _translations = new();
     public IReadOnlyCollection<PhraseTranslation> PhraseTranslations => _translations;
 
@@ -27,7 +28,8 @@ public class Phrase
         decimal x,
         decimal y,
         decimal width,
-        decimal height)
+        decimal height,
+        decimal confidence)
     {
         PageId = pageId;
 
@@ -44,6 +46,10 @@ public class Phrase
         Y = y;
         Width = width;
         Height = height;
+        if (confidence < 0 || confidence > 1)
+            throw new ArgumentException("Confidence must be between 0 and 1");
+
+        Confidence = confidence;
 
         CreatedAt = DateTime.UtcNow;
     }

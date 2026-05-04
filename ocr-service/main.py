@@ -4,18 +4,40 @@ from typing import List
 import easyocr
 import tempfile
 import os
+from PIL import Image
 
 app = FastAPI()
 
 _readers = {}
 
+
 def get_reader(lang: str):
     lang = (lang or "en").lower()
+
+    # Пока безопаснее использовать только английскую модель,
+    # чтобы не грузить несколько тяжелых OCR-моделей в память.
+    lang = "en"
 
     if lang not in _readers:
         _readers[lang] = easyocr.Reader([lang], gpu=False)
 
     return _readers[lang]
+
+
+def resize_image_for_ocr(path: str, max_width: int = 1200):
+    img = Image.open(path)
+
+    try:
+        if img.width <= max_width:
+            return
+
+        ratio = max_width / img.width
+        new_height = int(img.height * ratio)
+
+        resized = img.resize((max_width, new_height))
+        resized.save(path)
+    finally:
+        img.close()
 
 
 class OcrPhraseDto(BaseModel):
@@ -46,9 +68,17 @@ async def recognize_text(
 
     try:
         reader = get_reader(lang)
-        results = reader.readtext(temp_path)
+
+        resize_image_for_ocr(temp_path, max_width=1200)
+
+        results = reader.readtext(
+            temp_path,
+            canvas_size=1280,
+            mag_ratio=1.0
+        )
 
         phrases = []
+
         for item in results:
             bbox, text, confidence = item
 
@@ -72,6 +102,7 @@ async def recognize_text(
             )
 
         return phrases
+
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)

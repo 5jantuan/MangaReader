@@ -90,6 +90,15 @@ namespace MangaReader.Infrastructure.Persistence
                 entity.Property(p => p.CreatedAt)
                       .HasDefaultValueSql("NOW()");
 
+                entity.Property(p => p.ProcessingStatus)
+                      .IsRequired();
+
+                entity.Property(p => p.OcrProcessedAt);
+
+                entity.Property(p => p.TranslationProcessedAt);
+
+                entity.Property(p => p.ProcessingError);
+
                 entity.HasMany(p => p.Phrases)
                       .WithOne(ph => ph.Page)
                       .HasForeignKey(ph => ph.PageId)
@@ -110,6 +119,8 @@ namespace MangaReader.Infrastructure.Persistence
                       .WithOne(pt => pt.Phrase)
                       .HasForeignKey(pt => pt.PhraseId)
                       .OnDelete(DeleteBehavior.Cascade);
+                entity.Property(ph => ph.Confidence)
+                      .IsRequired();
             });
 
             // =================== PhraseTranslation ===================

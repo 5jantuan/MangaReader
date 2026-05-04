@@ -23,6 +23,7 @@ namespace MangaReader.Web.Services
                 .Include(m => m.Covers)
                 .Include(m => m.Chapters)
                     .ThenInclude(c => c.Pages)
+                        .ThenInclude(p => p.Phrases)
                 .Include(m => m.Categories)
                 .Where(m => m.AuthorId == userId)
                 .OrderByDescending(m => m.CreatedAt)
@@ -47,9 +48,21 @@ namespace MangaReader.Web.Services
                             Title = c.Title,
                             Number = c.Number,
                             Views = c.Views,
+
                             Pages = c.Pages
                                 .OrderBy(p => p.Number)
                                 .Select(p => p.ImagePath)
+                                .ToList(),
+
+                            PageStatuses = c.Pages
+                                .OrderBy(p => p.Number)
+                                .Select(p => new PageStatusDto
+                                {
+                                    Number = p.Number,
+                                    ImagePath = p.ImagePath,
+                                    ProcessingStatus = p.ProcessingStatus.ToString(),
+                                    PhrasesCount = p.Phrases.Count
+                                })
                                 .ToList()
                         })
                         .ToList()

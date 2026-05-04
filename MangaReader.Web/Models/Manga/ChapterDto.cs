@@ -7,4 +7,5 @@ public class ChapterDto
     public int Number { get; set; }
     public int Views { get; set; }
     public List<string> Pages { get; set; } = new();
+    public List<PageStatusDto> PageStatuses { get; set; } = new();
 }

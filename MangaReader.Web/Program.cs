@@ -10,6 +10,8 @@ using MangaReader.Infrastructure.Translation;
 using MangaReader.Web.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using MangaReader.Infrastructure.Services;
+using MangaReader.Web.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +53,8 @@ builder.Services.AddScoped<MangaService>();
 builder.Services.AddScoped<DemoTranslationSeeder>();
 builder.Services.AddScoped<ITranslationService, FakeTranslationService>();
 builder.Services.AddScoped<IChapterProcessingService, ChapterProcessingService>();
+builder.Services.AddSingleton<IChapterProcessingQueue, ChapterProcessingQueue>();
+builder.Services.AddHostedService<ChapterProcessingBackgroundService>();
 
 // Application services
 builder.Services.AddScoped<IPhraseService, PhraseService>();

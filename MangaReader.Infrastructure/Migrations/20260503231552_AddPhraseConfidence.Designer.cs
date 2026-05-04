@@ -3,6 +3,7 @@ using System;
 using MangaReader.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MangaReader.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260503231552_AddPhraseConfidence")]
+    partial class AddPhraseConfidence
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -192,18 +195,6 @@ namespace MangaReader.Infrastructure.Migrations
 
                     b.Property<int>("Number")
                         .HasColumnType("integer");
-
-                    b.Property<DateTime?>("OcrProcessedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ProcessingError")
-                        .HasColumnType("text");
-
-                    b.Property<int>("ProcessingStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("TranslationProcessedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 

@@ -99,7 +99,8 @@ public class DemoTranslationSeeder
                         x,
                         y,
                         width,
-                        height);
+                        height,
+                        0.95m);
 
                     _context.Phrases.Add(existingPhrase);
                     await _context.SaveChangesAsync();

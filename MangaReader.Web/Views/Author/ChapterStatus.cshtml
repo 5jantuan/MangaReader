@@ -1,0 +1,67 @@
+@model MangaReader.Web.ViewModels.Chapter.ChapterProcessingStatusViewModel
+
+<h2>Статус обработки главы</h2>
+
+<h3>@Model.ChapterTitle</h3>
+
+<p>
+    <strong>Статус главы:</strong> @Model.ChapterStatus
+</p>
+
+<p>
+    <strong>Прогресс:</strong> @Model.CompletedPages / @Model.TotalPages страниц
+</p>
+
+<div style="width: 100%; background-color: #eee; border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+    <div style="width: @Model.ProgressPercent%; background-color: #4caf50; color: white; padding: 8px; text-align: center;">
+        @Model.ProgressPercent%
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Страница</th>
+            <th>Превью</th>
+            <th>Статус</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var chapterPage in Model.Pages)
+        {
+            <tr>
+                <td>@chapterPage.Number</td>
+                <td>
+                    <img src="@chapterPage.ImagePath" style="width: 90px; border-radius: 6px;" />
+                </td>
+                <td>
+                    @if (chapterPage.Status == MangaReader.Domain.Enums.PageProcessingStatus.Completed)
+                    {
+                        <span style="color: green; font-weight: bold;">Готово</span>
+                    }
+                    else if (chapterPage.Status == MangaReader.Domain.Enums.PageProcessingStatus.OcrProcessing
+                        || chapterPage.Status == MangaReader.Domain.Enums.PageProcessingStatus.TranslationProcessing)
+                    {
+                        <span style="color: orange; font-weight: bold;">Обрабатывается</span>
+                    }
+                    else if (chapterPage.Status == MangaReader.Domain.Enums.PageProcessingStatus.OcrCompleted)
+                    {
+                        <span style="color: dodgerblue; font-weight: bold;">OCR завершён</span>
+                    }
+                    else if (chapterPage.Status == MangaReader.Domain.Enums.PageProcessingStatus.OcrNeedsReview)
+                    {
+                        <span style="color: purple; font-weight: bold;">Нужна проверка OCR</span>
+                    }
+                    else if (chapterPage.Status == MangaReader.Domain.Enums.PageProcessingStatus.Failed)
+                    {
+                        <span style="color: red; font-weight: bold;">Ошибка</span>
+                    }
+                    else
+                    {
+                        <span style="color: gray;">Ожидает</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -69,6 +69,10 @@ public class ChapterProcessingService : IChapterProcessingService
 
             foreach (var page in chapter.Pages.OrderBy(p => p.Number))
             {
+                // Ставим статус: OCR обрабатывается
+                page.MarkOcrProcessing();
+                await _chapterRepository.UpdateAsync(chapter);
+
                 _logger.LogInformation(
                     "Processing page {PageId}, number {PageNumber}, image {ImagePath}",
                     page.Id,
@@ -122,7 +126,8 @@ public class ChapterProcessingService : IChapterProcessingService
                         ocrPhrase.X,
                         ocrPhrase.Y,
                         ocrPhrase.Width,
-                        ocrPhrase.Height);
+                        ocrPhrase.Height,
+                        ocrPhrase.Confidence);
 
                     foreach (var language in languages)
                     {
@@ -137,6 +142,18 @@ public class ChapterProcessingService : IChapterProcessingService
                     await _phraseRepository.AddAsync(phrase);
                     acceptedCount++;
                 }
+
+                // 👉 ВАЖНО: статус страницы после OCR
+                if (skippedLowConfidence > 0)
+                {
+                    page.MarkOcrNeedsReview();
+                }
+                else
+                {
+                    page.MarkOcrCompleted();
+                }
+
+                await _chapterRepository.UpdateAsync(chapter);
 
                 _logger.LogInformation(
                     "Page {PageId} accepted {AcceptedCount} phrases. Skipped: empty={SkippedEmpty}, invalidSize={SkippedInvalidSize}, lowConfidence={SkippedLowConfidence}, tooShort={SkippedTooShort}",
