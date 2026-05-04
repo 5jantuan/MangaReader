@@ -26,4 +26,11 @@ public class ChapterRepository : IChapterRepository
         _context.Chapters.Update(chapter);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<Page?> GetPageWithPhrasesAsync(Guid pageId)
+    {
+        return await _context.Pages
+            .Include(p => p.Phrases)
+            .FirstOrDefaultAsync(p => p.Id == pageId);
+    }
 }

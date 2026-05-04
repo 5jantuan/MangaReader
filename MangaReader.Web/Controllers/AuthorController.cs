@@ -218,6 +218,40 @@ namespace MangaReader.Web.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> ReviewOcrPage(Guid pageId)
+        {
+            var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
+
+            if (page == null)
+                return NotFound();
+
+            var model = new ReviewOcrPageViewModel
+            {
+                ChapterId = page.ChapterId,
+                PageId = page.Id,
+                PageNumber = page.Number,
+                ImagePath = page.ImagePath,
+                Status = page.ProcessingStatus,
+                Phrases = page.Phrases
+                    .OrderBy(p => p.Y)
+                    .ThenBy(p => p.X)
+                    .Select(p => new OcrPhraseReviewViewModel
+                    {
+                        PhraseId = p.Id,
+                        Text = p.Text,
+                        X = p.X,
+                        Y = p.Y,
+                        Width = p.Width,
+                        Height = p.Height,
+                        Confidence = p.Confidence
+                    })
+                    .ToList()
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> ReadChapter(Guid chapterId)
         {
             var chapter = await _mangaService.GetChapterForReadingAndIncrementViews(chapterId);

@@ -60,6 +60,14 @@
                     {
                         <span style="color: gray;">Ожидает</span>
                     }
+
+                    <br />
+
+                    <a asp-action="ReviewOcrPage"
+                    asp-route-pageId="@chapterPage.PageId"
+                    class="btn btn-sm btn-outline-primary mt-1">
+                        Проверить OCR
+                    </a>
                 </td>
             </tr>
         }

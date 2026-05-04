@@ -1,0 +1,112 @@
+@model MangaReader.Web.ViewModels.Chapter.ReviewOcrPageViewModel
+@using System.Text.Json
+
+<div class="container-fluid py-4">
+    <div class="mb-3">
+        <a asp-action="ChapterStatus"
+           asp-route-chapterId="@Model.ChapterId"
+           class="btn btn-outline-secondary btn-sm">
+            ← Назад к статусам
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4>Страница @Model.PageNumber</h4>
+                    <p class="text-muted">Статус: @Model.Status</p>
+
+                    <div id="ocrWrapper" class="ocr-image-wrapper">
+                        <img src="@Model.ImagePath"
+                             id="ocrImage"
+                             class="ocr-page-image" />
+
+                        @foreach (var phrase in Model.Phrases)
+                        {
+                            <div class="ocr-box" title="@phrase.Text"></div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4>Распознанный текст</h4>
+
+                    <p class="text-muted">Фраз найдено: @Model.Phrases.Count</p>
+
+                    <div class="list-group">
+                        @foreach (var phrase in Model.Phrases)
+                        {
+                            <div class="list-group-item">
+                                <div class="fw-semibold">@phrase.Text</div>
+                                <small class="text-muted">
+                                    Confidence: @phrase.Confidence<br />
+                                    X: @phrase.X, Y: @phrase.Y,
+                                    W: @phrase.Width, H: @phrase.Height
+                                </small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .ocr-image-wrapper {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .ocr-page-image {
+        display: block;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .ocr-box {
+        position: absolute;
+        border: 2px solid red;
+        background-color: rgba(255, 0, 0, 0.15);
+        z-index: 10;
+        pointer-events: none;
+    }
+</style>
+
+<script>
+    const phrases = @Html.Raw(JsonSerializer.Serialize(Model.Phrases));
+
+    const img = document.getElementById("ocrImage");
+    const boxes = document.querySelectorAll(".ocr-box");
+
+    function drawBoxes() {
+        const scaleX = img.clientWidth / img.naturalWidth;
+        const scaleY = img.clientHeight / img.naturalHeight;
+
+        phrases.forEach((phrase, index) => {
+            const box = boxes[index];
+
+            box.style.left = (phrase.X * scaleX) + "px";
+            box.style.top = (phrase.Y * scaleY) + "px";
+            box.style.width = (phrase.Width * scaleX) + "px";
+            box.style.height = (phrase.Height * scaleY) + "px";
+        });
+    }
+
+    if (img.complete) {
+        drawBoxes();
+    } else {
+        img.onload = drawBoxes;
+    }
+
+    window.addEventListener("resize", drawBoxes);
+</script>

@@ -12,10 +12,6 @@ _readers = {}
 
 
 def get_reader(lang: str):
-    lang = (lang or "en").lower()
-
-    # Пока безопаснее использовать только английскую модель,
-    # чтобы не грузить несколько тяжелых OCR-моделей в память.
     lang = "en"
 
     if lang not in _readers:
@@ -28,14 +24,24 @@ def resize_image_for_ocr(path: str, max_width: int = 1200):
     img = Image.open(path)
 
     try:
+        original_width = img.width
+        original_height = img.height
+
         if img.width <= max_width:
-            return
+            return 1.0, 1.0
 
         ratio = max_width / img.width
+        new_width = max_width
         new_height = int(img.height * ratio)
 
-        resized = img.resize((max_width, new_height))
+        resized = img.resize((new_width, new_height))
         resized.save(path)
+
+        scale_x_back = original_width / new_width
+        scale_y_back = original_height / new_height
+
+        return scale_x_back, scale_y_back
+
     finally:
         img.close()
 
@@ -69,7 +75,7 @@ async def recognize_text(
     try:
         reader = get_reader(lang)
 
-        resize_image_for_ocr(temp_path, max_width=1200)
+        scale_x_back, scale_y_back = resize_image_for_ocr(temp_path, max_width=1200)
 
         results = reader.readtext(
             temp_path,
@@ -85,10 +91,10 @@ async def recognize_text(
             xs = [p[0] for p in bbox]
             ys = [p[1] for p in bbox]
 
-            x = min(xs)
-            y = min(ys)
-            width = max(xs) - x
-            height = max(ys) - y
+            x = min(xs) * scale_x_back
+            y = min(ys) * scale_y_back
+            width = (max(xs) - min(xs)) * scale_x_back
+            height = (max(ys) - min(ys)) * scale_y_back
 
             phrases.append(
                 OcrPhraseDto(
