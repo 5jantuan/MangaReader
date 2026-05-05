@@ -22,9 +22,15 @@
                              id="ocrImage"
                              class="ocr-page-image" />
 
+                        <div id="selectionBox" class="selection-box"></div>
+
                         @foreach (var phrase in Model.Phrases)
                         {
-                            <div class="ocr-box" title="@phrase.Text"></div>
+                            <div class="ocr-box"
+                                data-phrase-id="@phrase.PhraseId"
+                                data-text="@phrase.Text"
+                                title="@phrase.Text">
+                            </div>
                         }
                     </div>
                 </div>
@@ -38,19 +44,98 @@
 
                     <p class="text-muted">Фраз найдено: @Model.Phrases.Count</p>
 
-                    <div class="list-group">
-                        @foreach (var phrase in Model.Phrases)
-                        {
-                            <div class="list-group-item">
-                                <div class="fw-semibold">@phrase.Text</div>
-                                <small class="text-muted">
-                                    Confidence: @phrase.Confidence<br />
-                                    X: @phrase.X, Y: @phrase.Y,
-                                    W: @phrase.Width, H: @phrase.Height
-                                </small>
+                    <hr />
+
+                    <h5>Добавить фразу вручную</h5>
+
+                    <p class="text-muted small">
+                        Выдели область на картинке мышкой, потом введи текст.
+                    </p>
+
+                    <form asp-action="AddManualOcrPhrase" method="post" class="mb-4">
+                        <input type="hidden" name="pageId" value="@Model.PageId" />
+
+                        <input type="hidden" id="manualX" name="x" />
+                        <input type="hidden" id="manualY" name="y" />
+                        <input type="hidden" id="manualWidth" name="width" />
+                        <input type="hidden" id="manualHeight" name="height" />
+
+                        <div class="mb-2">
+                            <label class="form-label">Текст</label>
+                            <input name="text" class="form-control" required />
+                        </div>
+
+                        <div class="small text-muted mb-2">
+                            X: <span id="coordX">—</span>,
+                            Y: <span id="coordY">—</span>,
+                            W: <span id="coordW">—</span>,
+                            H: <span id="coordH">—</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            Сохранить фразу
+                        </button>
+                    </form>
+
+                    <div id="editPhrasePanel" class="mb-4" style="display: none;">
+                        <h5>Редактировать выбранную фразу</h5>
+
+                        <form asp-action="UpdateOcrPhrase" method="post">
+                            <input type="hidden" id="editPhraseId" name="phraseId" />
+                            <input type="hidden" name="pageId" value="@Model.PageId" />
+
+                            <div class="mb-2">
+                                <label class="form-label">Текст</label>
+                                <textarea id="editPhraseText"
+                                        name="text"
+                                        class="form-control"
+                                        rows="3"></textarea>
                             </div>
-                        }
+
+                            <button type="submit" class="btn btn-success btn-sm">
+                                Сохранить изменения
+                            </button>
+                        </form>
                     </div>
+
+                    <form asp-action="DeleteOcrPhrase" method="post" class="mt-2">
+                        <input type="hidden" id="deletePhraseId" name="phraseId" />
+                        <input type="hidden" name="pageId" value="@Model.PageId" />
+
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            Удалить фразу
+                        </button>
+                    </form>
+
+                    @foreach (var phrase in Model.Phrases)
+                    {
+                        <div class="list-group-item">
+                            <form asp-action="UpdateOcrPhrase" method="post">
+                                <input type="hidden" name="phraseId" value="@phrase.PhraseId" />
+                                <input type="hidden" name="pageId" value="@Model.PageId" />
+
+                                <input name="text"
+                                    value="@phrase.Text"
+                                    class="form-control mb-2" />
+
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        Сохранить
+                                    </button>
+                            </form>
+
+                            <form asp-action="DeleteOcrPhrase" method="post">
+                                <input type="hidden" name="phraseId" value="@phrase.PhraseId" />
+                                <input type="hidden" name="pageId" value="@Model.PageId" />
+
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    Удалить
+                                </button>
+                            </form>
+                        </div>
+                        
+                    }
+                    
                 </div>
             </div>
         </div>
@@ -78,7 +163,20 @@
         border: 2px solid red;
         background-color: rgba(255, 0, 0, 0.15);
         z-index: 10;
+        cursor: pointer;
+    }
+
+    .selection-box {
+        position: absolute;
+        border: 2px dashed blue;
+        background-color: rgba(0, 0, 255, 0.12);
+        display: none;
+        z-index: 20;
         pointer-events: none;
+    }
+    .ocr-box-selected {
+        border: 3px solid blue;
+        background-color: rgba(0, 0, 255, 0.18);
     }
 </style>
 
@@ -102,6 +200,26 @@
         });
     }
 
+    document.querySelectorAll(".ocr-box").forEach(box => {
+        box.addEventListener("click", function (e) {
+            e.stopPropagation();
+
+            document.querySelectorAll(".ocr-box").forEach(b => {
+                b.classList.remove("ocr-box-selected");
+            });
+
+            box.classList.add("ocr-box-selected");
+
+            document.getElementById("editPhrasePanel").style.display = "block";
+            document.getElementById("editPhraseId").value = box.dataset.phraseId;
+            document.getElementById("editPhraseText").value = box.dataset.text;
+            document.getElementById("editPhraseText").focus();
+            document.getElementById("deletePhraseId").value = box.dataset.phraseId;
+        });
+    });
+
+    
+
     if (img.complete) {
         drawBoxes();
     } else {
@@ -109,4 +227,82 @@
     }
 
     window.addEventListener("resize", drawBoxes);
+</script>
+<script>
+    const wrapper = document.getElementById("ocrWrapper");
+    const image = document.getElementById("ocrImage");
+    const selectionBox = document.getElementById("selectionBox");
+
+    let isSelecting = false;
+    let startX = 0;
+    let startY = 0;
+
+    wrapper.addEventListener("mousedown", function (e) {
+        if (e.target !== image) return;
+
+        const rect = image.getBoundingClientRect();
+
+        isSelecting = true;
+
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+
+        selectionBox.style.left = startX + "px";
+        selectionBox.style.top = startY + "px";
+        selectionBox.style.width = "0px";
+        selectionBox.style.height = "0px";
+        selectionBox.style.display = "block";
+    });
+
+    wrapper.addEventListener("mousemove", function (e) {
+        if (!isSelecting) return;
+
+        const rect = wrapper.getBoundingClientRect();
+
+        const currentX = e.clientX - rect.left;
+        const currentY = e.clientY - rect.top;
+
+        const left = Math.min(startX, currentX);
+        const top = Math.min(startY, currentY);
+        const width = Math.abs(currentX - startX);
+        const height = Math.abs(currentY - startY);
+
+        selectionBox.style.left = left + "px";
+        selectionBox.style.top = top + "px";
+        selectionBox.style.width = width + "px";
+        selectionBox.style.height = height + "px";
+    });
+
+    wrapper.addEventListener("mouseup", function (e) {
+        if (!isSelecting) return;
+
+        isSelecting = false;
+
+        const boxLeft = parseFloat(selectionBox.style.left);
+        const boxTop = parseFloat(selectionBox.style.top);
+        const boxWidth = parseFloat(selectionBox.style.width);
+        const boxHeight = parseFloat(selectionBox.style.height);
+
+        if (boxWidth < 5 || boxHeight < 5) {
+            return;
+        }
+
+        const scaleX = image.naturalWidth / image.clientWidth;
+        const scaleY = image.naturalHeight / image.clientHeight;
+
+        const realX = boxLeft * scaleX;
+        const realY = boxTop * scaleY;
+        const realWidth = boxWidth * scaleX;
+        const realHeight = boxHeight * scaleY;
+
+        document.getElementById("manualX").value = realX.toFixed(2);
+        document.getElementById("manualY").value = realY.toFixed(2);
+        document.getElementById("manualWidth").value = realWidth.toFixed(2);
+        document.getElementById("manualHeight").value = realHeight.toFixed(2);
+
+        document.getElementById("coordX").innerText = realX.toFixed(2);
+        document.getElementById("coordY").innerText = realY.toFixed(2);
+        document.getElementById("coordW").innerText = realWidth.toFixed(2);
+        document.getElementById("coordH").innerText = realHeight.toFixed(2);
+    });
 </script>

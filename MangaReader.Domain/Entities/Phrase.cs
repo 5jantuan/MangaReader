@@ -74,4 +74,12 @@ public class Phrase
 
         _translations.Add(translation);
     }
+    
+    public void UpdateText(string newText)
+    {
+        if (string.IsNullOrWhiteSpace(newText))
+            throw new ArgumentException("Text cannot be empty", nameof(newText));
+
+        Text = newText;
+}
 }

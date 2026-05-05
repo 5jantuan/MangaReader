@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Globalization;
 using MangaReader.Web.Services;
 using MangaReader.Web.ViewModels.Chapter;
 using MangaReader.Web.ViewModels.Manga;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MangaReader.Domain.Interfaces;
 using MangaReader.Domain.Enums;
+using MangaReader.Domain.Entities;
 using MangaReader.Application.Interfaces;
 
 namespace MangaReader.Web.Controllers
@@ -20,6 +22,7 @@ namespace MangaReader.Web.Controllers
         private readonly IChapterProcessingService _chapterProcessingService;
         private readonly IChapterProcessingQueue _chapterProcessingQueue;
         private readonly IChapterRepository _chapterRepository;
+        private readonly IPhraseRepository _phraseRepository;
 
         public AuthorController(
             MangaService mangaService,
@@ -28,7 +31,8 @@ namespace MangaReader.Web.Controllers
             DemoTranslationSeeder demoTranslationSeeder,
             IChapterProcessingService chapterProcessingService,
             IChapterProcessingQueue chapterProcessingQueue,
-            IChapterRepository chapterRepository)
+            IChapterRepository chapterRepository,
+            IPhraseRepository phraseRepository)
         {
             _mangaService = mangaService;
             _fileService = fileService;
@@ -37,6 +41,7 @@ namespace MangaReader.Web.Controllers
             _chapterProcessingService = chapterProcessingService;
             _chapterProcessingQueue = chapterProcessingQueue;
             _chapterRepository = chapterRepository;
+            _phraseRepository = phraseRepository;
         }
 
         private Guid GetCurrentUserId()
@@ -362,6 +367,69 @@ namespace MangaReader.Web.Controllers
             await _demoTranslationSeeder.SeedFrierenDemoAsync(chapterId, russianLanguageId);
 
             return RedirectToAction("MangaDetails", new { mangaId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddManualOcrPhrase(
+            Guid pageId,
+            string text,
+            string x,
+            string y,
+            string width,
+            string height)
+        {
+            var parsedX = decimal.Parse(x, CultureInfo.InvariantCulture);
+            var parsedY = decimal.Parse(y, CultureInfo.InvariantCulture);
+            var parsedWidth = decimal.Parse(width, CultureInfo.InvariantCulture);
+            var parsedHeight = decimal.Parse(height, CultureInfo.InvariantCulture);
+
+            var phrase = new Phrase(
+                pageId,
+                text,
+                parsedX,
+                parsedY,
+                parsedWidth,
+                parsedHeight,
+                1m
+            );
+
+            await _phraseRepository.AddAsync(phrase);
+            await _phraseRepository.SaveChangesAsync();
+
+            return RedirectToAction("ReviewOcrPage", new { pageId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateOcrPhrase(
+            Guid phraseId,
+            Guid pageId,
+            string text)
+        {
+            var phrase = await _phraseRepository.GetByIdAsync(phraseId);
+
+            if (phrase == null)
+                return NotFound();
+
+            phrase.UpdateText(text);
+
+            await _phraseRepository.UpdateAsync(phrase);
+            await _phraseRepository.SaveChangesAsync();
+
+            return RedirectToAction("ReviewOcrPage", new { pageId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteOcrPhrase(Guid phraseId, Guid pageId)
+        {
+            var phrase = await _phraseRepository.GetByIdAsync(phraseId);
+
+            if (phrase == null)
+                return NotFound();
+
+            await _phraseRepository.RemoveAsync(phrase);
+            await _phraseRepository.SaveChangesAsync();
+
+            return RedirectToAction("ReviewOcrPage", new { pageId });
         }
     }
 }
