@@ -33,4 +33,10 @@ public class ChapterRepository : IChapterRepository
             .Include(p => p.Phrases)
             .FirstOrDefaultAsync(p => p.Id == pageId);
     }
+
+    public async Task UpdatePageAsync(Page page)
+    {
+        _context.Pages.Update(page);
+        await _context.SaveChangesAsync();
+    }
 }

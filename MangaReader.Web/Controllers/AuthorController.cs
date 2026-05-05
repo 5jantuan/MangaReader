@@ -431,5 +431,40 @@ namespace MangaReader.Web.Controllers
 
             return RedirectToAction("ReviewOcrPage", new { pageId });
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ConfirmOcrPage(Guid pageId)
+        {
+            var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
+
+            if (page == null)
+                return NotFound();
+
+            page.MarkOcrCompleted();
+
+            await _chapterRepository.UpdatePageAsync(page);
+
+            return RedirectToAction("ChapterStatus", new { chapterId = page.ChapterId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> StartPageTranslation(Guid pageId)
+        {
+            var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
+
+            if (page == null)
+                return NotFound();
+
+            page.MarkTranslationProcessing();
+
+            await _chapterRepository.UpdatePageAsync(page);
+
+            // Временная имитация: позже тут будет реальный сервис перевода
+            page.MarkCompleted();
+
+            await _chapterRepository.UpdatePageAsync(page);
+
+            return RedirectToAction("ChapterStatus", new { chapterId = page.ChapterId });
+        }
     }
 }

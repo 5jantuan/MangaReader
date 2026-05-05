@@ -61,6 +61,16 @@
                         <span style="color: gray;">Ожидает</span>
                     }
 
+                    @if (chapterPage.Status == MangaReader.Domain.Enums.PageProcessingStatus.OcrCompleted)
+                    {
+                        <form asp-action="StartPageTranslation" method="post" class="mt-2">
+                            <input type="hidden" name="pageId" value="@chapterPage.PageId" />
+                            <button type="submit" class="btn btn-sm btn-success">
+                                Запустить перевод
+                            </button>
+                        </form>
+                    }
+
                     <br />
 
                     <a asp-action="ReviewOcrPage"

@@ -44,6 +44,14 @@
 
                     <p class="text-muted">Фраз найдено: @Model.Phrases.Count</p>
 
+                    <form asp-action="ConfirmOcrPage" method="post" class="mb-3">
+                        <input type="hidden" name="pageId" value="@Model.PageId" />
+
+                        <button type="submit" class="btn btn-success">
+                            OCR проверен
+                        </button>
+                    </form>
+                    
                     <hr />
 
                     <h5>Добавить фразу вручную</h5>
