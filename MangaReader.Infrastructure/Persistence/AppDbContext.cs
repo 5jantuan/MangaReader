@@ -15,6 +15,8 @@ namespace MangaReader.Infrastructure.Persistence
         public DbSet<Page> Pages { get; set; } = null!;
         public DbSet<Phrase> Phrases { get; set; } = null!;
         public DbSet<PhraseTranslation> PhraseTranslations { get; set; } = null!;
+        public DbSet<Bubble> Bubbles { get; set; } = null!;
+        public DbSet<BubbleTranslation> BubbleTranslations { get; set; } = null!;
         public DbSet<Language> Languages { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<MangaCover> MangaCovers { get; set; } = null!;
@@ -157,6 +159,57 @@ namespace MangaReader.Infrastructure.Persistence
                   .IsRequired()
                   .HasMaxLength(100);
             });
+            // =================== Bubble ===================
+            modelBuilder.Entity<Bubble>(entity =>
+            {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.OriginalText)
+                  .IsRequired();
+
+            entity.Property(e => e.X).IsRequired();
+            entity.Property(e => e.Y).IsRequired();
+            entity.Property(e => e.Width).IsRequired();
+            entity.Property(e => e.Height).IsRequired();
+
+            entity.Property(e => e.CreatedAt)
+                  .HasDefaultValueSql("NOW()");
+
+            entity.HasOne(e => e.Page)
+                  .WithMany(p => p.Bubbles)
+                  .HasForeignKey(e => e.PageId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.Phrases)
+                  .WithOne(p => p.Bubble)
+                  .HasForeignKey(p => p.BubbleId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasMany(e => e.Translations)
+                  .WithOne(t => t.Bubble)
+                  .HasForeignKey(t => t.BubbleId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            });
+            // =================== BubbleTranslation ===================    
+            modelBuilder.Entity<BubbleTranslation>(entity =>
+            {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Text)
+                  .IsRequired();
+
+            entity.Property(e => e.CreatedAt)
+                  .HasDefaultValueSql("NOW()");
+
+            entity.HasOne(e => e.Language)
+                  .WithMany(l => l.BubbleTranslations)
+                  .HasForeignKey(e => e.LanguageId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => new { e.BubbleId, e.LanguageId })
+                  .IsUnique();
+            });  
         }
+        
     }
 }

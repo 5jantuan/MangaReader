@@ -7,6 +7,7 @@ public class Language
     public string Name { get; private set; } = null!; // "English", "Русский", "日本語"
 
     public ICollection<PhraseTranslation> PhraseTranslations { get; private set; } = new List<PhraseTranslation>();
+    public ICollection<BubbleTranslation> BubbleTranslations { get; private set; } = new List<BubbleTranslation>();
 
     protected Language() { }
 

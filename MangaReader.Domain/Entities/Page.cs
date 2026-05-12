@@ -11,6 +11,8 @@ public class Page
     public Chapter Chapter { get; private set; } = null!;
     private readonly List<Phrase> _phrases = new();
     public IReadOnlyCollection<Phrase> Phrases => _phrases;
+    private readonly List<Bubble> _bubbles = new();
+    public IReadOnlyCollection<Bubble> Bubbles => _bubbles;
 
     public PageProcessingStatus ProcessingStatus { get; private set; } = PageProcessingStatus.Pending;
     public DateTime? OcrProcessedAt { get; private set; }

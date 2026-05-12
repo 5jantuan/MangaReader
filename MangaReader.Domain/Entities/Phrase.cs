@@ -9,6 +9,8 @@ public class Phrase
     public Guid Id { get; private set; }
     public Guid PageId { get; private set; }
     public Page Page { get; private set; } = null!;
+    public Guid? BubbleId { get; private set; }
+    public Bubble? Bubble { get; private set; }
     public string Text { get; private set; } = null!;
     public decimal X { get; private set; }
     public decimal Y { get; private set; }
@@ -52,6 +54,11 @@ public class Phrase
         Confidence = confidence;
 
         CreatedAt = DateTime.UtcNow;
+    }
+
+    public void AssignToBubble(Guid bubbleId)
+    {
+        BubbleId = bubbleId;
     }
 
     public void AddTranslation(Guid languageId, string text)

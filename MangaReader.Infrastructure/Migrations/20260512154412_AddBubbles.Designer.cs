@@ -3,6 +3,7 @@ using System;
 using MangaReader.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MangaReader.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260512154412_AddBubbles")]
+    partial class AddBubbles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -74,7 +77,7 @@ namespace MangaReader.Infrastructure.Migrations
 
                     b.HasIndex("PageId");
 
-                    b.ToTable("Bubbles");
+                    b.ToTable("Bubble");
                 });
 
             modelBuilder.Entity("MangaReader.Domain.Entities.BubbleTranslation", b =>
@@ -105,7 +108,7 @@ namespace MangaReader.Infrastructure.Migrations
                     b.HasIndex("BubbleId", "LanguageId")
                         .IsUnique();
 
-                    b.ToTable("BubbleTranslations");
+                    b.ToTable("BubbleTranslation");
                 });
 
             modelBuilder.Entity("MangaReader.Domain.Entities.Category", b =>
