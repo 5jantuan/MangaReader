@@ -532,7 +532,13 @@ namespace MangaReader.Web.Controllers
                     }
                     else
                     {
-                        bubble.AddTranslation(language.Id, translatedText);
+                        var translation = new BubbleTranslation(
+                            bubble.Id,
+                            language.Id,
+                            translatedText
+                        );
+
+                        await _bubbleRepository.AddTranslationAsync(translation);
                     }
                 }
             }

@@ -52,4 +52,9 @@ public class BubbleRepository : IBubbleRepository
             .Include(b => b.Phrases)
             .FirstOrDefaultAsync(b => b.Id == id);
     }
+
+    public async Task AddTranslationAsync(BubbleTranslation translation)
+    {
+        await _context.BubbleTranslations.AddAsync(translation);
+    }
 }

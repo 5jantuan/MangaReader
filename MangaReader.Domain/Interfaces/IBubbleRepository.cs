@@ -9,4 +9,5 @@ public interface IBubbleRepository
     Task SaveChangesAsync();
     Task<List<Bubble>> GetByPageIdAsync(Guid pageId);
     Task<Bubble?> GetByIdAsync(Guid id);
+    Task AddTranslationAsync(BubbleTranslation translation);
 }
