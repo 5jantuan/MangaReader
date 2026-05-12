@@ -105,53 +105,7 @@ namespace MangaReader.Infrastructure.Persistence
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // =================== Phrase ===================
-            modelBuilder.Entity<Phrase>(entity =>
-            {
-                entity.HasKey(ph => ph.Id);
-
-                entity.Property(ph => ph.Text).IsRequired();
-
-                entity.Property(ph => ph.CreatedAt)
-                      .HasDefaultValueSql("NOW()");
-
-                entity.HasMany(ph => ph.PhraseTranslations)
-                      .WithOne(pt => pt.Phrase)
-                      .HasForeignKey(pt => pt.PhraseId)
-                      .OnDelete(DeleteBehavior.Cascade);
-                entity.Property(ph => ph.Confidence)
-                      .IsRequired();
-            });
-
-            // =================== PhraseTranslation ===================
-            modelBuilder.Entity<PhraseTranslation>(entity =>
-            {
-                entity.HasKey(pt => pt.Id);
-
-                entity.Property(pt => pt.Text).IsRequired();
-
-                entity.Property(pt => pt.CreatedAt)
-                      .HasDefaultValueSql("NOW()");
-
-                entity.HasOne(pt => pt.Language)
-                      .WithMany(l => l.PhraseTranslations)
-                      .HasForeignKey(pt => pt.LanguageId)
-                      .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            // =================== Language ===================
-            modelBuilder.Entity<Language>(entity =>
-            {
-                entity.HasKey(l => l.Id);
-
-                entity.Property(l => l.Code)
-                      .IsRequired()
-                      .HasMaxLength(10);
-
-                entity.Property(l => l.Name)
-                      .IsRequired()
-                      .HasMaxLength(100);
-            });
+           
 
             // =================== User ===================
             modelBuilder.Entity<User>(entity =>

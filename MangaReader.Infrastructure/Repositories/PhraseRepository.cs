@@ -18,13 +18,15 @@ public class PhraseRepository : IPhraseRepository
     {
         return await _context.Phrases
             .Include(p => p.PhraseTranslations)
+                .ThenInclude(t => t.Language)
             .FirstOrDefaultAsync(p => p.Id == id);
-    }
+    }  
 
     public async Task<IReadOnlyList<Phrase>> GetByPageIdAsync(Guid pageId)
     {
         return await _context.Phrases
             .Include(p => p.PhraseTranslations)
+                .ThenInclude(t => t.Language)
             .Where(p => p.PageId == pageId)
             .ToListAsync();
     }

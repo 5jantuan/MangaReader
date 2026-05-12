@@ -58,6 +58,7 @@ builder.Services.AddHostedService<ChapterProcessingBackgroundService>();
 
 // Application services
 builder.Services.AddScoped<IPhraseService, PhraseService>();
+builder.Services.AddScoped<IPhraseGroupingService, PhraseGroupingService>();
 
 // Use cases
 builder.Services.AddScoped<IGetPhrasesForPageUseCase, GetPhrasesForPageUseCase>();

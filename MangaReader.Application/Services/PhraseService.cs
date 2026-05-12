@@ -20,7 +20,7 @@ namespace MangaReader.Application.Services
             if (phrase == null)
                 throw new InvalidOperationException("Phrase not found");
 
-            phrase.AddTranslation(language, text);
+            phrase.AddTranslation(language.Id, text);
             await _phraseRepository.UpdateAsync(phrase);
         }
     }

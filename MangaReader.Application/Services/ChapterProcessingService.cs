@@ -136,7 +136,7 @@ public class ChapterProcessingService : IChapterProcessingService
                             sourceLanguageCode,
                             language.Code);
 
-                        phrase.AddTranslation(language, translatedText);
+                        phrase.AddTranslation(language.Id, translatedText);
                     }
 
                     await _phraseRepository.AddAsync(phrase);

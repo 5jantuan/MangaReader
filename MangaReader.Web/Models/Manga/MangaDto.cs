@@ -9,3 +9,4 @@ public class MangaDto
     public List<ChapterDto> Chapters { get; set; } = new();
     public List<string> Categories { get; set; } = new();
 }
+

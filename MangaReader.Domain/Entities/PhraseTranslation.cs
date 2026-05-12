@@ -15,12 +15,11 @@ public class PhraseTranslation
 
     protected PhraseTranslation() { }
 
-    public PhraseTranslation(Phrase phrase, Language language, string text)
+    public PhraseTranslation(Phrase phrase, Guid languageId, string text)
     {
         PhraseId = phrase.Id;
 
-        Language = language ?? throw new ArgumentNullException(nameof(language));
-        LanguageId = language.Id;
+        LanguageId = languageId;
 
         if (string.IsNullOrWhiteSpace(text))
             throw new ArgumentException("Text cannot be empty", nameof(text));
@@ -28,5 +27,13 @@ public class PhraseTranslation
         Id = Guid.NewGuid();
         Text = text;
         CreatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            throw new ArgumentException("Text cannot be empty");
+
+        Text = text;
     }
 }

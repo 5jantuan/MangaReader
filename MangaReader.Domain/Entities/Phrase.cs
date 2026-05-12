@@ -54,21 +54,17 @@ public class Phrase
         CreatedAt = DateTime.UtcNow;
     }
 
-    public void AddTranslation(Language language, string text)
+    public void AddTranslation(Guid languageId, string text)
     {
         if (string.IsNullOrWhiteSpace(text))
-        {
             throw new ArgumentException("Translation text cannot be empty", nameof(text));
-        }
-            
-        if(_translations.Any(t => t.Language.Id == language.Id))
-        {
+
+        if (_translations.Any(t => t.LanguageId == languageId))
             throw new InvalidOperationException("Translation for this language already exists");
-        }
 
         var translation = new PhraseTranslation(
             this,
-            language,
+            languageId,
             text
         );
 
@@ -81,5 +77,25 @@ public class Phrase
             throw new ArgumentException("Text cannot be empty", nameof(newText));
 
         Text = newText;
-}
+    }
+
+    public void UpdateTextAndBox(
+    string newText,
+    decimal x,
+    decimal y,
+    decimal width,
+    decimal height)
+    {
+        if (string.IsNullOrWhiteSpace(newText))
+            throw new ArgumentException("Text cannot be empty", nameof(newText));
+
+        if (width <= 0 || height <= 0)
+            throw new ArgumentException("Width and Height must be positive");
+
+        Text = newText;
+        X = x;
+        Y = y;
+        Width = width;
+        Height = height;
+    }
 }

@@ -23,6 +23,9 @@ namespace MangaReader.Web.Controllers
         private readonly IChapterProcessingQueue _chapterProcessingQueue;
         private readonly IChapterRepository _chapterRepository;
         private readonly IPhraseRepository _phraseRepository;
+        private readonly ITranslationService _translationService;
+        private readonly ILanguageRepository _languageRepository;
+        private readonly IPhraseGroupingService _phraseGroupingService;
 
         public AuthorController(
             MangaService mangaService,
@@ -32,7 +35,10 @@ namespace MangaReader.Web.Controllers
             IChapterProcessingService chapterProcessingService,
             IChapterProcessingQueue chapterProcessingQueue,
             IChapterRepository chapterRepository,
-            IPhraseRepository phraseRepository)
+            IPhraseRepository phraseRepository,
+            ITranslationService translationService,
+            ILanguageRepository languageRepository,
+            IPhraseGroupingService phraseGroupingService)
         {
             _mangaService = mangaService;
             _fileService = fileService;
@@ -42,6 +48,9 @@ namespace MangaReader.Web.Controllers
             _chapterProcessingQueue = chapterProcessingQueue;
             _chapterRepository = chapterRepository;
             _phraseRepository = phraseRepository;
+            _translationService = translationService;
+            _languageRepository = languageRepository;
+            _phraseGroupingService = phraseGroupingService;
         }
 
         private Guid GetCurrentUserId()
@@ -226,31 +235,43 @@ namespace MangaReader.Web.Controllers
         public async Task<IActionResult> ReviewOcrPage(Guid pageId)
         {
             var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
+            var bubbles = _phraseGroupingService.GroupPhrases(page.Phrases.ToList());
 
             if (page == null)
                 return NotFound();
 
             var model = new ReviewOcrPageViewModel
             {
-                ChapterId = page.ChapterId,
                 PageId = page.Id,
+                ChapterId = page.ChapterId,
                 PageNumber = page.Number,
                 ImagePath = page.ImagePath,
                 Status = page.ProcessingStatus,
-                Phrases = page.Phrases
-                    .OrderBy(p => p.Y)
-                    .ThenBy(p => p.X)
-                    .Select(p => new OcrPhraseReviewViewModel
-                    {
-                        PhraseId = p.Id,
-                        Text = p.Text,
-                        X = p.X,
-                        Y = p.Y,
-                        Width = p.Width,
-                        Height = p.Height,
-                        Confidence = p.Confidence
-                    })
-                    .ToList()
+
+                Phrases = page.Phrases.Select(p => new OcrPhraseReviewViewModel
+                {
+                    PhraseId = p.Id,
+                    Text = p.Text,
+                    X = p.X,
+                    Y = p.Y,
+                    Width = p.Width,
+                    Height = p.Height
+                }).ToList(),
+
+                Bubbles = bubbles.Select(b => new SpeechBubbleReviewViewModel
+                {
+                    Text = b.CombinedText,
+                    X = b.X,
+                    Y = b.Y,
+                    Width = b.Width,
+                    Height = b.Height,
+                    PhraseIds = b.Phrases.Select(p => p.Id).ToList(),
+
+                    Translation = b.Phrases
+                        .SelectMany(p => p.PhraseTranslations)
+                        .FirstOrDefault(t => t.Language.Code == "ru")?.Text
+
+                }).ToList()
             };
 
             return View(model);
@@ -455,16 +476,76 @@ namespace MangaReader.Web.Controllers
             if (page == null)
                 return NotFound();
 
+            var russianLanguageId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+
             page.MarkTranslationProcessing();
 
-            await _chapterRepository.UpdatePageAsync(page);
+            var phrases = await _phraseRepository.GetByPageIdAsync(pageId);
 
-            // Временная имитация: позже тут будет реальный сервис перевода
+            foreach (var phrase in phrases)
+            {
+                var translatedText = await _translationService.TranslateAsync(
+                    phrase.Text,
+                    "en",
+                    "ru"
+                );
+
+                var existingTranslation = phrase.PhraseTranslations
+                    .FirstOrDefault(t => t.LanguageId == russianLanguageId);
+
+                if (existingTranslation != null)
+                {
+                    existingTranslation.UpdateText(translatedText);
+                }
+                else
+                {
+                    phrase.AddTranslation(russianLanguageId, translatedText);
+                }
+            }
+
             page.MarkCompleted();
 
-            await _chapterRepository.UpdatePageAsync(page);
+            await _phraseRepository.SaveChangesAsync();
 
             return RedirectToAction("ChapterStatus", new { chapterId = page.ChapterId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateOcrBubble(
+            Guid pageId,
+            string phraseIds,
+            string text,
+            decimal x,
+            decimal y,
+            decimal width,
+            decimal height)
+        {
+            var ids = phraseIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Guid.Parse)
+                .ToList();
+
+            if (!ids.Any())
+                return RedirectToAction("ReviewOcrPage", new { pageId });
+
+            var firstPhrase = await _phraseRepository.GetByIdAsync(ids.First());
+
+            if (firstPhrase == null)
+                return NotFound();
+
+            firstPhrase.UpdateTextAndBox(text, x, y, width, height);
+
+            foreach (var id in ids.Skip(1))
+            {
+                var phrase = await _phraseRepository.GetByIdAsync(id);
+
+                if (phrase != null)
+                    await _phraseRepository.RemoveAsync(phrase);
+            }
+
+            await _phraseRepository.SaveChangesAsync();
+
+            return RedirectToAction("ReviewOcrPage", new { pageId });
         }
     }
 }

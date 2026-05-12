@@ -120,7 +120,7 @@ public class DemoTranslationSeeder
                 {
                     var phraseTranslation = new PhraseTranslation(
                         phraseWithTranslations,
-                        russian,
+                        russian.Id,
                         translation);
 
                     _context.PhraseTranslations.Add(phraseTranslation);

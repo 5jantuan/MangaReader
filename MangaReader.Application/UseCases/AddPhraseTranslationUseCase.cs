@@ -27,7 +27,7 @@ public class AddPhraseTranslationUseCase  : IAddPhraseTranslationUseCase
         if (phrase == null)
             throw new InvalidOperationException("Phrase not found");
 
-        phrase.AddTranslation(language, translatedText);
+        phrase.AddTranslation(language.Id, translatedText);
 
         await _phraseRepository.SaveChangesAsync();
     }
