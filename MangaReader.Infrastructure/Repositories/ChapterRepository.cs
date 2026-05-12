@@ -41,4 +41,22 @@ public class ChapterRepository : IChapterRepository
         _context.Pages.Update(page);
         await _context.SaveChangesAsync();
     }
+    public async Task<Page?> GetPageWithPhrasesAndBubblesAsync(Guid pageId)
+    {
+        return await _context.Pages
+            .Include(p => p.Chapter)
+                .ThenInclude(c => c.Manga)
+                    .ThenInclude(m => m.OriginalLanguage)
+
+            .Include(p => p.Phrases)
+
+            .Include(p => p.Bubbles)
+                .ThenInclude(b => b.Phrases)
+
+            .Include(p => p.Bubbles)
+                .ThenInclude(b => b.Translations)
+                    .ThenInclude(t => t.Language)
+
+            .FirstOrDefaultAsync(p => p.Id == pageId);
+    }
 }

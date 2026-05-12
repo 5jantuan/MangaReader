@@ -32,4 +32,24 @@ public class BubbleRepository : IBubbleRepository
     {
         await _context.SaveChangesAsync();
     }
+
+    public async Task<List<Bubble>> GetByPageIdAsync(Guid pageId)
+    {
+        return await _context.Bubbles
+            .Include(b => b.Translations)
+                .ThenInclude(t => t.Language)
+            .Include(b => b.Phrases)
+            .Where(b => b.PageId == pageId)
+            .OrderBy(b => b.Number)
+            .ToListAsync();
+    }
+
+    public async Task<Bubble?> GetByIdAsync(Guid id)
+    {
+        return await _context.Bubbles
+            .Include(b => b.Translations)
+                .ThenInclude(t => t.Language)
+            .Include(b => b.Phrases)
+            .FirstOrDefaultAsync(b => b.Id == id);
+    }
 }

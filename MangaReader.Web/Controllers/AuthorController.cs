@@ -26,6 +26,8 @@ namespace MangaReader.Web.Controllers
         private readonly ITranslationService _translationService;
         private readonly ILanguageRepository _languageRepository;
         private readonly IPhraseGroupingService _phraseGroupingService;
+        private readonly IBubbleGroupingService _bubbleGroupingService;
+        private readonly IBubbleRepository _bubbleRepository;
 
         public AuthorController(
             MangaService mangaService,
@@ -38,7 +40,9 @@ namespace MangaReader.Web.Controllers
             IPhraseRepository phraseRepository,
             ITranslationService translationService,
             ILanguageRepository languageRepository,
-            IPhraseGroupingService phraseGroupingService)
+            IPhraseGroupingService phraseGroupingService,
+            IBubbleGroupingService bubbleGroupingService,
+            IBubbleRepository bubbleRepository)
         {
             _mangaService = mangaService;
             _fileService = fileService;
@@ -51,6 +55,8 @@ namespace MangaReader.Web.Controllers
             _translationService = translationService;
             _languageRepository = languageRepository;
             _phraseGroupingService = phraseGroupingService;
+            _bubbleGroupingService = bubbleGroupingService;
+            _bubbleRepository = bubbleRepository;
         }
 
         private Guid GetCurrentUserId()
@@ -204,6 +210,19 @@ namespace MangaReader.Web.Controllers
             return RedirectToAction("ChapterStatus", new { chapterId });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> GroupPageBubbles(Guid pageId)
+        {
+            var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
+
+            if (page == null)
+                return NotFound();
+
+            await _bubbleGroupingService.GroupPageAsync(pageId);
+
+            return RedirectToAction("ReviewOcrPage", new { pageId });
+        }
+
         public async Task<IActionResult> ChapterStatus(Guid chapterId)
         {
             var chapter = await _chapterRepository.GetByIdWithPagesAsync(chapterId);
@@ -236,8 +255,7 @@ namespace MangaReader.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ReviewOcrPage(Guid pageId)
         {
-            var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
-            var bubbles = _phraseGroupingService.GroupPhrases(page.Phrases.ToList());
+            var page = await _chapterRepository.GetPageWithPhrasesAndBubblesAsync(pageId);
 
             if (page == null)
                 return NotFound();
@@ -260,20 +278,21 @@ namespace MangaReader.Web.Controllers
                     Height = p.Height
                 }).ToList(),
 
-                Bubbles = bubbles.Select(b => new SpeechBubbleReviewViewModel
-                {
-                    Text = b.CombinedText,
-                    X = b.X,
-                    Y = b.Y,
-                    Width = b.Width,
-                    Height = b.Height,
-                    PhraseIds = b.Phrases.Select(p => p.Id).ToList(),
+                Bubbles = page.Bubbles
+                    .OrderBy(b => b.Number)
+                    .Select(b => new SpeechBubbleReviewViewModel
+                    {
+                        Text = b.OriginalText,
+                        X = b.X,
+                        Y = b.Y,
+                        Width = b.Width,
+                        Height = b.Height,
+                        PhraseIds = b.Phrases.Select(p => p.Id).ToList(),
 
-                    Translation = b.Phrases
-                        .SelectMany(p => p.PhraseTranslations)
-                        .FirstOrDefault(t => t.Language.Code == "ru")?.Text
-
-                }).ToList()
+                        Translation = b.Translations
+                            .FirstOrDefault(t => t.Language.Code == "ru")?.Text
+                    })
+                    .ToList()
             };
 
             return View(model);
@@ -473,43 +492,56 @@ namespace MangaReader.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> StartPageTranslation(Guid pageId)
         {
-            var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
+            var page = await _chapterRepository.GetPageWithPhrasesAndBubblesAsync(pageId);
 
             if (page == null)
                 return NotFound();
 
-            var russianLanguageId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+            if (page.Chapter?.Manga?.OriginalLanguage == null)
+                return BadRequest("Source language not found");
+
+            var sourceLanguageCode = page.Chapter.Manga.OriginalLanguage.Code;
+
+            var bubbles = await _bubbleRepository.GetByPageIdAsync(pageId);
+
+            if (bubbles.Count == 0)
+                return BadRequest("No bubbles found");
+
+            var targetLanguages = await _languageRepository.GetAllAsync();
 
             page.MarkTranslationProcessing();
 
-            var phrases = await _phraseRepository.GetByPageIdAsync(pageId);
-
-            foreach (var phrase in phrases)
+            foreach (var bubble in bubbles)
             {
-                var translatedText = await _translationService.TranslateAsync(
-                    phrase.Text,
-                    "en",
-                    "ru"
-                );
-
-                var existingTranslation = phrase.PhraseTranslations
-                    .FirstOrDefault(t => t.LanguageId == russianLanguageId);
-
-                if (existingTranslation != null)
+                foreach (var language in targetLanguages)
                 {
-                    existingTranslation.UpdateText(translatedText);
-                }
-                else
-                {
-                    phrase.AddTranslation(russianLanguageId, translatedText);
+                    if (language.Code == sourceLanguageCode)
+                        continue;
+
+                    var translatedText = await _translationService.TranslateAsync(
+                        bubble.OriginalText,
+                        sourceLanguageCode,
+                        language.Code);
+
+                    var existingTranslation = bubble.Translations
+                        .FirstOrDefault(t => t.LanguageId == language.Id);
+
+                    if (existingTranslation != null)
+                    {
+                        existingTranslation.UpdateText(translatedText);
+                    }
+                    else
+                    {
+                        bubble.AddTranslation(language.Id, translatedText);
+                    }
                 }
             }
 
             page.MarkCompleted();
 
-            await _phraseRepository.SaveChangesAsync();
+            await _bubbleRepository.SaveChangesAsync();
 
-            return RedirectToAction("ChapterStatus", new { chapterId = page.ChapterId });
+            return RedirectToAction("ReviewOcrPage", new { pageId });
         }
 
         [HttpPost]

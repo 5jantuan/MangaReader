@@ -8,4 +8,5 @@ public interface IChapterRepository
     Task UpdateAsync(Chapter chapter);
     Task<Page?> GetPageWithPhrasesAsync(Guid pageId);
     Task UpdatePageAsync(Page page);
+    Task<Page?> GetPageWithPhrasesAndBubblesAsync(Guid pageId);
 }
