@@ -38,6 +38,7 @@ builder.Services.AddScoped<IPhraseRepository, PhraseRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ILanguageRepository, LanguageRepository>();
 builder.Services.AddScoped<IChapterRepository, ChapterRepository>();
+builder.Services.AddScoped<IBubbleRepository, BubbleRepository>();
 
 
 builder.Services.AddHttpClient<IOcrService, HttpOcrService>(client =>
@@ -59,6 +60,7 @@ builder.Services.AddHostedService<ChapterProcessingBackgroundService>();
 // Application services
 builder.Services.AddScoped<IPhraseService, PhraseService>();
 builder.Services.AddScoped<IPhraseGroupingService, PhraseGroupingService>();
+builder.Services.AddScoped<IBubbleGroupingService, BubbleGroupingService>();
 
 // Use cases
 builder.Services.AddScoped<IGetPhrasesForPageUseCase, GetPhrasesForPageUseCase>();
