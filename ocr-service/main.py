@@ -12,12 +12,14 @@ _readers = {}
 
 
 def get_reader(lang: str):
-    lang = "en"
+    if not lang:
+        lang = "en"
 
     if lang not in _readers:
         _readers[lang] = easyocr.Reader([lang], gpu=False)
 
     return _readers[lang]
+
 
 
 def resize_image_for_ocr(path: str, max_width: int = 1200):
@@ -73,6 +75,8 @@ async def recognize_text(
         temp_path = tmp.name
 
     try:
+        print(f"OCR language: {lang}")
+
         reader = get_reader(lang)
 
         scale_x_back, scale_y_back = resize_image_for_ocr(temp_path, max_width=1200)
@@ -112,3 +116,4 @@ async def recognize_text(
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
