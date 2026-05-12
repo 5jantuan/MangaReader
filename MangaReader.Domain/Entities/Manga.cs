@@ -7,6 +7,8 @@ public class Manga
     public string Description { get; private set; } = null!;
     public Guid AuthorId { get; set; }
     public User Author { get; set; }
+    public Guid OriginalLanguageId { get; private set; }
+    public Language OriginalLanguage { get; private set; } = null!;
     private readonly List<MangaCover> _covers;
     private readonly List<Chapter> _chapters;
 
@@ -43,25 +45,27 @@ public class Manga
         _categories = new();
     }
 
-    public static Manga Create(string title, string description, Guid authorId)
+    public static Manga Create(string title, string description, Guid authorId, Guid originalLanguageId)
     {
         return new Manga
         {
             Id = Guid.NewGuid(),
             Title = title,
-            Description = description,
+            Description = description ?? string.Empty,
             AuthorId = authorId,
+            OriginalLanguageId = originalLanguageId,
             CreatedAt = DateTime.UtcNow
         };
     }
     // Метод для обновления информации
-    public void UpdateInfo(string title, string description)
+    public void UpdateInfo(string title, string description, Guid originalLanguageId)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title cannot be empty", nameof(title));
 
         Title = title;
         Description = description ?? string.Empty;
+        OriginalLanguageId = originalLanguageId;
     }
 
     // Метод для добавления главы

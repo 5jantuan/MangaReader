@@ -24,6 +24,19 @@
                             <textarea asp-for="Description" class="form-control" rows="5"></textarea>
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
+                        <div class="mb-3">
+                            <label asp-for="OriginalLanguageId" class="form-label">Язык оригинала</label>
+                            <select asp-for="OriginalLanguageId" class="form-select">
+                                <option value="">Выберите язык</option>
+                                @foreach (var language in Model.AvailableLanguages)
+                                {
+                                    <option value="@language.Id">
+                                        @language.Name (@language.Code)
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="OriginalLanguageId" class="text-danger"></span>
+                        </div>
 
                         <div class="mb-3">
                             <label class="form-label">Категории</label>

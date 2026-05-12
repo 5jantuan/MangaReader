@@ -42,6 +42,13 @@ namespace MangaReader.Infrastructure.Persistence
                       .WithMany()
                       .HasForeignKey(m => m.AuthorId)
                       .OnDelete(DeleteBehavior.Restrict);
+                entity.Property(e => e.OriginalLanguageId)
+                      .IsRequired();
+
+                entity.HasOne(e => e.OriginalLanguage)
+                      .WithMany()
+                      .HasForeignKey(e => e.OriginalLanguageId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
                 // Chapters
                 entity.HasMany(m => m.Chapters)

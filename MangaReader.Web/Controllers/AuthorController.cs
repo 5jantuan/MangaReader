@@ -92,7 +92,8 @@ namespace MangaReader.Web.Controllers
         {
             var model = new CreateMangaViewModel
             {
-                AvailableCategories = await _mangaService.GetCategoriesForSelect()
+                AvailableCategories = await _mangaService.GetCategoriesForSelect(),
+                AvailableLanguages = await _mangaService.GetLanguagesForSelect()
             };
 
             return View(model);
@@ -104,6 +105,7 @@ namespace MangaReader.Web.Controllers
             if (!ModelState.IsValid)
             {
                 model.AvailableCategories = await _mangaService.GetCategoriesForSelect();
+                model.AvailableLanguages = await _mangaService.GetLanguagesForSelect();
                 return View(model);
             }
 

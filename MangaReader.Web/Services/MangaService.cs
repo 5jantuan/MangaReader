@@ -72,7 +72,12 @@ namespace MangaReader.Web.Services
 
         public async Task CreateManga(CreateMangaViewModel model, string? coverUrl, Guid userId)
         {
-            var manga = Manga.Create(model.Title, model.Description, userId);
+            var manga = Manga.Create(
+                model.Title,
+                model.Description,
+                userId,
+                model.OriginalLanguageId
+            );
 
             if (model.SelectedCategoryIds.Any())
             {
@@ -161,6 +166,20 @@ namespace MangaReader.Web.Services
                 {
                     Id = c.Id,
                     Name = c.Name
+                })
+                .ToListAsync();
+        }
+
+        public async Task<List<LanguageOptionViewModel>> GetLanguagesForSelect()
+        {
+            return await _context.Languages
+                .AsNoTracking()
+                .OrderBy(l => l.Name)
+                .Select(l => new LanguageOptionViewModel
+                {
+                    Id = l.Id,
+                    Code = l.Code,
+                    Name = l.Name
                 })
                 .ToListAsync();
         }
