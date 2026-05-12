@@ -32,21 +32,25 @@ public class ChapterProcessingService : IChapterProcessingService
 
     public async Task ProcessChapterAsync(Guid chapterId)
     {
-        _logger.LogInformation("Starting processing for chapter {ChapterId}", chapterId);
+        _logger.LogInformation("Starting OCR processing for chapter {ChapterId}", chapterId);
 
         var chapter = await _chapterRepository.GetByIdWithPagesAsync(chapterId);
         if (chapter == null)
             throw new InvalidOperationException("Chapter not found");
 
-        var languages = await _languageRepository.GetAllAsync();
-        if (languages.Count == 0)
-            throw new InvalidOperationException("No languages found");
+        if (chapter.Manga == null)
+            throw new InvalidOperationException("Chapter manga was not loaded");
+
+        if (chapter.Manga.OriginalLanguage == null)
+            throw new InvalidOperationException("Manga original language was not loaded");
+
+        var sourceLanguageCode = chapter.Manga.OriginalLanguage.Code;
 
         _logger.LogInformation(
-            "Chapter {ChapterId} loaded with {PageCount} pages and {LanguageCount} target languages",
+            "Chapter {ChapterId} loaded with {PageCount} pages. Source language: {SourceLanguageCode}",
             chapterId,
             chapter.Pages.Count,
-            languages.Count);
+            sourceLanguageCode);
 
         chapter.MarkAsProcessing();
         await _chapterRepository.UpdateAsync(chapter);
@@ -63,13 +67,8 @@ public class ChapterProcessingService : IChapterProcessingService
                 chapterId,
                 pageIds.Count);
 
-            // TODO: later source language should come from Manga metadata.
-            // For now we temporarily assume Japanese as the source language.
-            const string sourceLanguageCode = "ja";
-
             foreach (var page in chapter.Pages.OrderBy(p => p.Number))
             {
-                // Ставим статус: OCR обрабатывается
                 page.MarkOcrProcessing();
                 await _chapterRepository.UpdateAsync(chapter);
 
@@ -79,7 +78,9 @@ public class ChapterProcessingService : IChapterProcessingService
                     page.Number,
                     page.ImagePath);
 
-                var ocrPhrases = await _ocrService.ExtractPhrasesAsync(page.ImagePath);
+                var ocrPhrases = await _ocrService.ExtractPhrasesAsync(
+                    page.ImagePath,
+                    sourceLanguageCode);
 
                 _logger.LogInformation(
                     "OCR returned {RawPhraseCount} raw phrases for page {PageId}",
@@ -129,29 +130,14 @@ public class ChapterProcessingService : IChapterProcessingService
                         ocrPhrase.Height,
                         ocrPhrase.Confidence);
 
-                    foreach (var language in languages)
-                    {
-                        var translatedText = await _translationService.TranslateAsync(
-                            cleanedText,
-                            sourceLanguageCode,
-                            language.Code);
-
-                        phrase.AddTranslation(language.Id, translatedText);
-                    }
-
                     await _phraseRepository.AddAsync(phrase);
                     acceptedCount++;
                 }
 
-                // 👉 ВАЖНО: статус страницы после OCR
                 if (skippedLowConfidence > 0)
-                {
                     page.MarkOcrNeedsReview();
-                }
                 else
-                {
                     page.MarkOcrCompleted();
-                }
 
                 await _chapterRepository.UpdateAsync(chapter);
 
@@ -170,11 +156,11 @@ public class ChapterProcessingService : IChapterProcessingService
             chapter.MarkAsCompleted();
             await _chapterRepository.UpdateAsync(chapter);
 
-            _logger.LogInformation("Chapter {ChapterId} processing completed successfully", chapterId);
+            _logger.LogInformation("Chapter {ChapterId} OCR processing completed successfully", chapterId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Chapter {ChapterId} processing failed", chapterId);
+            _logger.LogError(ex, "Chapter {ChapterId} OCR processing failed", chapterId);
 
             chapter.MarkAsFailed(ex.Message);
             await _chapterRepository.UpdateAsync(chapter);

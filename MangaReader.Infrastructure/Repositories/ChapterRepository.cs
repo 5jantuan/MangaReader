@@ -17,6 +17,8 @@ public class ChapterRepository : IChapterRepository
     public async Task<Chapter?> GetByIdWithPagesAsync(Guid chapterId)
     {
         return await _context.Chapters
+            .Include(c => c.Manga)
+                .ThenInclude(m => m.OriginalLanguage)
             .Include(c => c.Pages)
             .FirstOrDefaultAsync(c => c.Id == chapterId);
     }

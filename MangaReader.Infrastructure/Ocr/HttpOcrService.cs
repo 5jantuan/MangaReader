@@ -17,7 +17,7 @@ public class HttpOcrService : IOcrService
         _environment = environment;
     }
 
-    public async Task<List<OcrPhraseDto>> ExtractPhrasesAsync(string imagePath)
+    public async Task<List<OcrPhraseDto>> ExtractPhrasesAsync(string imagePath, string languageCode)
     {
         if (string.IsNullOrWhiteSpace(imagePath))
             throw new ArgumentException("Image path cannot be empty.", nameof(imagePath));
@@ -36,8 +36,10 @@ public class HttpOcrService : IOcrService
         fileContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
         form.Add(fileContent, "file", Path.GetFileName(fullPath));
 
-        // TODO: later pass Manga original language here instead of hardcoded "en".
-        form.Add(new StringContent("en"), "lang");
+        if (string.IsNullOrWhiteSpace(languageCode))
+            throw new ArgumentException("Language code cannot be empty.", nameof(languageCode));
+
+        form.Add(new StringContent(languageCode), "lang");
 
         var response = await _httpClient.PostAsync("/ocr", form);
 

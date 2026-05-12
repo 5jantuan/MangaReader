@@ -4,5 +4,5 @@ namespace MangaReader.Application.Interfaces;
 
 public interface IOcrService
 {
-    Task<List<OcrPhraseDto>> ExtractPhrasesAsync(string imagePath);
+    Task<List<OcrPhraseDto>> ExtractPhrasesAsync(string imagePath, string languageCode);
 }
