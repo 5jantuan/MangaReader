@@ -72,4 +72,10 @@ public class Page
         ProcessingStatus = PageProcessingStatus.Failed;
         ProcessingError = error;
     }
+    public void MarkBubbleGroupingRequired()
+    {
+        ProcessingStatus = PageProcessingStatus.BubbleGroupingRequired;
+        TranslationProcessedAt = null;
+        ProcessingError = null;
+    }
 }

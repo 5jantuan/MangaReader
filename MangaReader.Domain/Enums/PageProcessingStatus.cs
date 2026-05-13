@@ -6,7 +6,8 @@ public enum PageProcessingStatus
     OcrProcessing = 1,
     OcrCompleted = 2,
     OcrNeedsReview = 3,
-    TranslationProcessing = 4,
-    Completed = 5,
-    Failed = 6
+    BubbleGroupingRequired = 4,
+    TranslationProcessing = 5,
+    Completed = 6,
+    Failed = 7
 }

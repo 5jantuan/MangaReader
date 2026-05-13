@@ -10,4 +10,7 @@ public interface IBubbleRepository
     Task<List<Bubble>> GetByPageIdAsync(Guid pageId);
     Task<Bubble?> GetByIdAsync(Guid id);
     Task AddTranslationAsync(BubbleTranslation translation);
+    Task RemoveTranslationsByPageIdAsync(Guid pageId);
+    Task UpdateAsync(Bubble bubble);
+    Task RemoveTranslationsByBubbleIdAsync(Guid bubbleId);
 }

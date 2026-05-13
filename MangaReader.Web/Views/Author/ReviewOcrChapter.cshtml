@@ -1,0 +1,258 @@
+@model MangaReader.Web.ViewModels.Chapter.ReviewOcrChapterViewModel
+@using System.Text.Json
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0">@Model.ChapterTitle</h3>
+            <p class="text-muted mb-0">Проверка OCR и баблов</p>
+        </div>
+
+        <a asp-action="ChapterStatus"
+           asp-route-chapterId="@Model.ChapterId"
+           class="btn btn-outline-secondary btn-sm">
+            Назад к статусам
+        </a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-2">
+            <div class="page-thumbnails">
+                @foreach (var chapterPage in Model.Pages)
+                {
+                    var activeClass = chapterPage.PageId == Model.CurrentPageId ? "active-page" : "";
+
+                    <a asp-action="ReviewOcrChapter"
+                    asp-route-chapterId="@Model.ChapterId"
+                    asp-route-pageId="@chapterPage.PageId"
+                    class="thumb-card @activeClass">
+                        <img src="@chapterPage.ImagePath" class="thumb-img" />
+                        <div class="thumb-number">Стр. @chapterPage.Number</div>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Страница @Model.CurrentPageNumber</h5>
+                    <p class="text-muted">Статус: @Model.CurrentPageStatus</p>
+
+                    <div id="ocrWrapper" class="ocr-image-wrapper">
+                        <img src="@Model.CurrentImagePath"
+                             id="ocrImage"
+                             class="ocr-page-image" />
+
+                        @foreach (var bubble in Model.Bubbles)
+                        {
+                            <div class="bubble-box"
+                                 data-bubble-id="@bubble.BubbleId"
+                                 data-text="@bubble.Text"
+                                 data-x="@bubble.X"
+                                 data-y="@bubble.Y"
+                                 data-width="@bubble.Width"
+                                 data-height="@bubble.Height"
+                                 title="@bubble.Text">
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form asp-action="GroupPageBubbles" method="post" class="mb-3">
+                        <input type="hidden" name="pageId" value="@Model.CurrentPageId" />
+                        <button type="submit" class="btn btn-warning w-100">
+                            Пересформировать баблы страницы
+                        </button>
+                    </form>
+
+                    <hr />
+
+                    <div id="emptyPanel">
+                        <p class="text-muted">
+                            Нажми на бабл на странице, чтобы редактировать его текст и координаты.
+                        </p>
+                    </div>
+
+                    <div id="editBubblePanel" style="display:none;">
+                        <h5>Редактировать бабл</h5>
+
+                        <form asp-action="UpdateBubble" method="post">
+                            <input type="hidden" name="chapterId" value="@Model.ChapterId" />
+                            <input type="hidden" name="pageId" value="@Model.CurrentPageId" />
+                            <input type="hidden" id="bubbleId" name="bubbleId" />
+
+                            <div class="mb-2">
+                                <label class="form-label">Текст бабла</label>
+                                <textarea id="bubbleText"
+                                          name="text"
+                                          class="form-control"
+                                          rows="5"></textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <label class="form-label">X</label>
+                                    <input id="bubbleX" name="x" class="form-control" />
+                                </div>
+
+                                <div class="col-6 mb-2">
+                                    <label class="form-label">Y</label>
+                                    <input id="bubbleY" name="y" class="form-control" />
+                                </div>
+
+                                <div class="col-6 mb-2">
+                                    <label class="form-label">Width</label>
+                                    <input id="bubbleWidth" name="width" class="form-control" />
+                                </div>
+
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">Height</label>
+                                    <input id="bubbleHeight" name="height" class="form-control" />
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100">
+                                Сохранить бабл
+                            </button>
+                        </form>
+                    </div>
+
+                    <hr />
+
+                    <form asp-action="StartChapterTranslation" method="post">
+                        <input type="hidden" name="chapterId" value="@Model.ChapterId" />
+                        <button type="submit" class="btn btn-primary w-100">
+                            Запустить перевод всей главы
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .page-thumbnails {
+        max-height: 82vh;
+        overflow-y: auto;
+        padding-right: 6px;
+    }
+
+    .thumb-card {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 8px;
+        margin-bottom: 12px;
+        background: #f8f9fa;
+    }
+
+    .thumb-card:hover {
+        background: #eef3ff;
+    }
+
+    .active-page {
+        border-color: #dc3545;
+        background: #fff0f0;
+    }
+
+    .thumb-img {
+        width: 100%;
+        border-radius: 6px;
+        display: block;
+    }
+
+    .thumb-number {
+        text-align: center;
+        font-size: 13px;
+        margin-top: 6px;
+    }
+
+    .ocr-image-wrapper {
+        position: relative;
+        display: inline-block;
+        max-width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .ocr-page-image {
+        display: block;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .bubble-box {
+        position: absolute;
+        border: 2px solid red;
+        background-color: rgba(255, 0, 0, 0.15);
+        z-index: 10;
+        cursor: pointer;
+    }
+
+    .bubble-box-selected {
+        border: 3px solid blue;
+        background-color: rgba(0, 0, 255, 0.18);
+    }
+</style>
+
+<script>
+    const bubbles = @Html.Raw(JsonSerializer.Serialize(Model.Bubbles));
+
+    const img = document.getElementById("ocrImage");
+    const boxes = document.querySelectorAll(".bubble-box");
+
+    function drawBoxes() {
+        const scaleX = img.clientWidth / img.naturalWidth;
+        const scaleY = img.clientHeight / img.naturalHeight;
+
+        bubbles.forEach((bubble, index) => {
+            const box = boxes[index];
+            if (!box) return;
+
+            box.style.left = (bubble.X * scaleX) + "px";
+            box.style.top = (bubble.Y * scaleY) + "px";
+            box.style.width = (bubble.Width * scaleX) + "px";
+            box.style.height = (bubble.Height * scaleY) + "px";
+        });
+    }
+
+    document.querySelectorAll(".bubble-box").forEach(box => {
+        box.addEventListener("click", function (e) {
+            e.stopPropagation();
+
+            document.querySelectorAll(".bubble-box").forEach(b => {
+                b.classList.remove("bubble-box-selected");
+            });
+
+            box.classList.add("bubble-box-selected");
+
+            document.getElementById("emptyPanel").style.display = "none";
+            document.getElementById("editBubblePanel").style.display = "block";
+
+            document.getElementById("bubbleId").value = box.dataset.bubbleId;
+            document.getElementById("bubbleText").value = box.dataset.text;
+            document.getElementById("bubbleX").value = box.dataset.x;
+            document.getElementById("bubbleY").value = box.dataset.y;
+            document.getElementById("bubbleWidth").value = box.dataset.width;
+            document.getElementById("bubbleHeight").value = box.dataset.height;
+        });
+    });
+
+    if (img.complete) {
+        drawBoxes();
+    } else {
+        img.onload = drawBoxes;
+    }
+
+    window.addEventListener("resize", drawBoxes);
+</script>

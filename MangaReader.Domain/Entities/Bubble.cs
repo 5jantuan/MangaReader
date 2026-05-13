@@ -71,4 +71,24 @@ public class Bubble
 
         _translations.Add(new BubbleTranslation(Id, languageId, text));
     }
+
+    public void UpdateTextAndBox(
+        string text,
+        decimal x,
+        decimal y,
+        decimal width,
+        decimal height)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            throw new ArgumentException("Text cannot be empty", nameof(text));
+
+        if (width <= 0 || height <= 0)
+            throw new ArgumentException("Width and Height must be positive");
+
+        OriginalText = text;
+        X = x;
+        Y = y;
+        Width = width;
+        Height = height;
+    }
 }

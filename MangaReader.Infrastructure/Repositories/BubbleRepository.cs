@@ -57,4 +57,28 @@ public class BubbleRepository : IBubbleRepository
     {
         await _context.BubbleTranslations.AddAsync(translation);
     }
+
+    public async Task RemoveTranslationsByPageIdAsync(Guid pageId)
+    {
+        var translations = await _context.BubbleTranslations
+            .Where(t => t.Bubble.PageId == pageId)
+            .ToListAsync();
+
+        _context.BubbleTranslations.RemoveRange(translations);
+    }
+
+    public Task UpdateAsync(Bubble bubble)
+    {
+        _context.Bubbles.Update(bubble);
+        return Task.CompletedTask;
+    }
+
+    public async Task RemoveTranslationsByBubbleIdAsync(Guid bubbleId)
+    {
+        var translations = await _context.BubbleTranslations
+            .Where(t => t.BubbleId == bubbleId)
+            .ToListAsync();
+
+        _context.BubbleTranslations.RemoveRange(translations);
+    }
 }
