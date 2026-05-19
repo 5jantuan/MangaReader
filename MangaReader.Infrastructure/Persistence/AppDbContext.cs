@@ -189,6 +189,9 @@ namespace MangaReader.Infrastructure.Persistence
                   .WithOne(t => t.Bubble)
                   .HasForeignKey(t => t.BubbleId)
                   .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.TranslationFontSize)
+                  .IsRequired()
+                  .HasDefaultValue(14);
             });
             // =================== BubbleTranslation ===================    
             modelBuilder.Entity<BubbleTranslation>(entity =>

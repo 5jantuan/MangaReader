@@ -755,7 +755,8 @@ namespace MangaReader.Web.Controllers
                         Width = b.Width,
                         Height = b.Height,
                         PhraseIds = b.Phrases.Select(p => p.Id).ToList(),
-                        Translation = b.Translations.FirstOrDefault(t => t.Language.Code == "ru")?.Text
+                        Translation = b.Translations.FirstOrDefault(t => t.Language.Code == "ru")?.Text,
+                        TranslationFontSize = b.TranslationFontSize
                     })
                     .ToList()
             };
@@ -772,17 +773,119 @@ namespace MangaReader.Web.Controllers
             decimal x,
             decimal y,
             decimal width,
-            decimal height)
+            decimal height,
+            int translationFontSize)
         {
             var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
 
             if (bubble == null)
                 return NotFound();
 
-            bubble.UpdateTextAndBox(text, x, y, width, height);
+            bubble.UpdateTextAndBox(text, x, y, width, height, translationFontSize);
 
             await _bubbleRepository.RemoveTranslationsByBubbleIdAsync(bubbleId);
             await _bubbleRepository.UpdateAsync(bubble);
+            await _bubbleRepository.SaveChangesAsync();
+
+            return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateBubbleReview(
+            Guid bubbleId,
+            Guid chapterId,
+            Guid pageId,
+            string text,
+            string? translation,
+            string x,
+            string y,
+            string width,
+            string height,
+            int translationFontSize)
+        {
+            var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
+
+            if (bubble == null)
+                return NotFound();
+
+            var parsedX = decimal.Parse(x, CultureInfo.InvariantCulture);
+            var parsedY = decimal.Parse(y, CultureInfo.InvariantCulture);
+            var parsedWidth = decimal.Parse(width, CultureInfo.InvariantCulture);
+            var parsedHeight = decimal.Parse(height, CultureInfo.InvariantCulture);
+
+            bubble.UpdateTextAndBox(
+                text,
+                parsedX,
+                parsedY,
+                parsedWidth,
+                parsedHeight,
+                translationFontSize);
+                    
+
+            if (!string.IsNullOrWhiteSpace(translation))
+            {
+                var languages = await _languageRepository.GetAllAsync();
+                var russian = languages.FirstOrDefault(l => l.Code == "ru");
+
+                if (russian != null)
+                {
+                    var existingTranslation = bubble.Translations
+                        .FirstOrDefault(t => t.LanguageId == russian.Id);
+
+                    if (existingTranslation != null)
+                    {
+                        existingTranslation.UpdateText(translation);
+                    }
+                    else
+                    {
+                        var newTranslation = new BubbleTranslation(
+                            bubble.Id,
+                            russian.Id,
+                            translation
+                        );
+
+                        await _bubbleRepository.AddTranslationAsync(newTranslation);
+                    }
+                }
+            }
+
+            await _bubbleRepository.UpdateAsync(bubble);
+            await _bubbleRepository.SaveChangesAsync();
+
+            return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddManualBubble(
+            Guid chapterId,
+            Guid pageId,
+            string text,
+            string x,
+            string y,
+            string width,
+            string height)
+        {
+            var parsedX = decimal.Parse(x, CultureInfo.InvariantCulture);
+            var parsedY = decimal.Parse(y, CultureInfo.InvariantCulture);
+            var parsedWidth = decimal.Parse(width, CultureInfo.InvariantCulture);
+            var parsedHeight = decimal.Parse(height, CultureInfo.InvariantCulture);
+
+            var existingBubbles = await _bubbleRepository.GetByPageIdAsync(pageId);
+            var nextNumber = existingBubbles.Any()
+                ? existingBubbles.Max(b => b.Number) + 1
+                : 1;
+
+            var bubble = new Bubble(
+                pageId,
+                nextNumber,
+                parsedX,
+                parsedY,
+                parsedWidth,
+                parsedHeight,
+                text
+            );
+
+            await _bubbleRepository.AddAsync(bubble);
             await _bubbleRepository.SaveChangesAsync();
 
             return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });

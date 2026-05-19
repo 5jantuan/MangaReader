@@ -6,6 +6,7 @@ public class SpeechBubbleReviewViewModel
     public string Text { get; set; } = string.Empty;
 
     public string? Translation { get; set; }
+    public int TranslationFontSize { get; set; } = 14;
 
     public decimal X { get; set; }
     public decimal Y { get; set; }

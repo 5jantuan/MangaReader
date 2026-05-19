@@ -43,17 +43,30 @@
                         <img src="@Model.CurrentImagePath"
                              id="ocrImage"
                              class="ocr-page-image" />
+                        <div id="selectionBox" class="selection-box"></div> 
 
                         @foreach (var bubble in Model.Bubbles)
                         {
                             <div class="bubble-box"
-                                 data-bubble-id="@bubble.BubbleId"
-                                 data-text="@bubble.Text"
-                                 data-x="@bubble.X"
-                                 data-y="@bubble.Y"
-                                 data-width="@bubble.Width"
-                                 data-height="@bubble.Height"
-                                 title="@bubble.Text">
+                                data-bubble-id="@bubble.BubbleId"
+                                data-text="@bubble.Text"
+                                data-translation="@bubble.Translation"
+                                data-x="@bubble.X"
+                                data-y="@bubble.Y"
+                                data-width="@bubble.Width"
+                                data-height="@bubble.Height"
+                                data-font-size="@bubble.TranslationFontSize"
+                                title="@bubble.Text">
+
+                                <div class="resize-handle"></div>
+
+                                @if (!string.IsNullOrWhiteSpace(bubble.Translation))
+                                {
+                                    <div class="bubble-translation"
+                                        style="font-size:@(bubble.TranslationFontSize)px">
+                                        @bubble.Translation
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -82,7 +95,7 @@
                     <div id="editBubblePanel" style="display:none;">
                         <h5>Редактировать бабл</h5>
 
-                        <form asp-action="UpdateBubble" method="post">
+                        <form asp-action="UpdateBubbleReview" method="post">
                             <input type="hidden" name="chapterId" value="@Model.ChapterId" />
                             <input type="hidden" name="pageId" value="@Model.CurrentPageId" />
                             <input type="hidden" id="bubbleId" name="bubbleId" />
@@ -93,6 +106,14 @@
                                           name="text"
                                           class="form-control"
                                           rows="5"></textarea>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label">Перевод</label>
+                                <textarea id="bubbleTranslation"
+                                        name="translation"
+                                        class="form-control"
+                                        rows="4"></textarea>
                             </div>
 
                             <div class="row">
@@ -115,6 +136,10 @@
                                     <label class="form-label">Height</label>
                                     <input id="bubbleHeight" name="height" class="form-control" />
                                 </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label">Размер шрифта</label>
+                                    <input id="bubbleFontSize" name="translationFontSize" class="form-control" />
+                                </div>
                             </div>
 
                             <button type="submit" class="btn btn-success w-100">
@@ -122,6 +147,30 @@
                             </button>
                         </form>
                     </div>
+
+                    <hr />
+
+                    <h5>Добавить новый бабл</h5>
+
+                    <p class="text-muted small">
+                        Выдели область на странице мышкой, введи текст и сохрани.
+                    </p>
+
+                    <form asp-action="AddManualBubble" method="post" class="mb-3">
+                        <input type="hidden" name="chapterId" value="@Model.ChapterId" />
+                        <input type="hidden" name="pageId" value="@Model.CurrentPageId" />
+
+                        <input type="hidden" id="manualBubbleX" name="x" />
+                        <input type="hidden" id="manualBubbleY" name="y" />
+                        <input type="hidden" id="manualBubbleWidth" name="width" />
+                        <input type="hidden" id="manualBubbleHeight" name="height" />
+
+                        <textarea name="text" class="form-control mb-2" rows="3" required></textarea>
+
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            Добавить бабл
+                        </button>
+                    </form>
 
                     <hr />
 
@@ -203,6 +252,40 @@
         border: 3px solid blue;
         background-color: rgba(0, 0, 255, 0.18);
     }
+
+    .bubble-translation {
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.88);
+        color: black;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 4px;
+        font-size: 14px;
+    }
+
+    .selection-box {
+        position: absolute;
+        border: 2px dashed blue;
+        background-color: rgba(0, 0, 255, 0.12);
+        display: none;
+        z-index: 30;
+        pointer-events: none;
+    }
+
+    .resize-handle {
+        position: absolute;
+        right: -5px;
+        bottom: -5px;
+        width: 12px;
+        height: 12px;
+        background: blue;
+        cursor: nwse-resize;
+        z-index: 50;
+    }
 </style>
 
 <script>
@@ -228,23 +311,107 @@
 
     document.querySelectorAll(".bubble-box").forEach(box => {
         box.addEventListener("click", function (e) {
-            e.stopPropagation();
+            let selectedBox = null;
+            let isDraggingBubble = false;
+            let isResizingBubble = false;
 
-            document.querySelectorAll(".bubble-box").forEach(b => {
-                b.classList.remove("bubble-box-selected");
+            let dragStartX = 0;
+            let dragStartY = 0;
+            let startLeft = 0;
+            let startTop = 0;
+            let startWidth = 0;
+            let startHeight = 0;
+
+            function fillBubbleForm(box) {
+                document.getElementById("emptyPanel").style.display = "none";
+                document.getElementById("editBubblePanel").style.display = "block";
+
+                document.getElementById("bubbleId").value = box.dataset.bubbleId;
+                document.getElementById("bubbleText").value = box.dataset.text;
+                document.getElementById("bubbleTranslation").value = box.dataset.translation || "";
+
+                document.getElementById("bubbleX").value = box.dataset.x;
+                document.getElementById("bubbleY").value = box.dataset.y;
+                document.getElementById("bubbleWidth").value = box.dataset.width;
+                document.getElementById("bubbleHeight").value = box.dataset.height;
+                document.getElementById("bubbleFontSize").value = box.dataset.fontSize || "14";
+            }
+
+            function updateFormFromBox(box) {
+                const scaleX = img.naturalWidth / img.clientWidth;
+                const scaleY = img.naturalHeight / img.clientHeight;
+
+                const x = parseFloat(box.style.left) * scaleX;
+                const y = parseFloat(box.style.top) * scaleY;
+                const width = parseFloat(box.style.width) * scaleX;
+                const height = parseFloat(box.style.height) * scaleY;
+
+                box.dataset.x = x.toFixed(2);
+                box.dataset.y = y.toFixed(2);
+                box.dataset.width = width.toFixed(2);
+                box.dataset.height = height.toFixed(2);
+
+                document.getElementById("bubbleX").value = x.toFixed(2);
+                document.getElementById("bubbleY").value = y.toFixed(2);
+                document.getElementById("bubbleWidth").value = width.toFixed(2);
+                document.getElementById("bubbleHeight").value = height.toFixed(2);
+            }
+
+            document.querySelectorAll(".bubble-box").forEach(box => {
+                box.addEventListener("mousedown", function (e) {
+                    e.stopPropagation();
+
+                    selectedBox = box;
+
+                    document.querySelectorAll(".bubble-box").forEach(b => {
+                        b.classList.remove("bubble-box-selected");
+                    });
+
+                    box.classList.add("bubble-box-selected");
+                    fillBubbleForm(box);
+
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+
+                    startLeft = parseFloat(box.style.left) || 0;
+                    startTop = parseFloat(box.style.top) || 0;
+                    startWidth = parseFloat(box.style.width) || 0;
+                    startHeight = parseFloat(box.style.height) || 0;
+
+                    if (e.target.classList.contains("resize-handle")) {
+                        isResizingBubble = true;
+                    } else {
+                        isDraggingBubble = true;
+                    }
+                });
             });
 
-            box.classList.add("bubble-box-selected");
+            document.addEventListener("mousemove", function (e) {
+                if (!selectedBox) return;
 
-            document.getElementById("emptyPanel").style.display = "none";
-            document.getElementById("editBubblePanel").style.display = "block";
+                const dx = e.clientX - dragStartX;
+                const dy = e.clientY - dragStartY;
 
-            document.getElementById("bubbleId").value = box.dataset.bubbleId;
-            document.getElementById("bubbleText").value = box.dataset.text;
-            document.getElementById("bubbleX").value = box.dataset.x;
-            document.getElementById("bubbleY").value = box.dataset.y;
-            document.getElementById("bubbleWidth").value = box.dataset.width;
-            document.getElementById("bubbleHeight").value = box.dataset.height;
+                if (isDraggingBubble) {
+                    selectedBox.style.left = (startLeft + dx) + "px";
+                    selectedBox.style.top = (startTop + dy) + "px";
+                    updateFormFromBox(selectedBox);
+                }
+
+                if (isResizingBubble) {
+                    const newWidth = Math.max(10, startWidth + dx);
+                    const newHeight = Math.max(10, startHeight + dy);
+
+                    selectedBox.style.width = newWidth + "px";
+                    selectedBox.style.height = newHeight + "px";
+                    updateFormFromBox(selectedBox);
+                }
+            });
+
+            document.addEventListener("mouseup", function () {
+                isDraggingBubble = false;
+                isResizingBubble = false;
+            });
         });
     });
 
@@ -255,4 +422,67 @@
     }
 
     window.addEventListener("resize", drawBoxes);
+
+    const wrapper = document.getElementById("ocrWrapper");
+    const selectionBox = document.getElementById("selectionBox");
+
+    let isSelecting = false;
+    let startX = 0;
+    let startY = 0;
+
+    wrapper.addEventListener("mousedown", function (e) {
+        if (e.target !== img) return;
+
+        const rect = img.getBoundingClientRect();
+
+        isSelecting = true;
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+
+        selectionBox.style.left = startX + "px";
+        selectionBox.style.top = startY + "px";
+        selectionBox.style.width = "0px";
+        selectionBox.style.height = "0px";
+        selectionBox.style.display = "block";
+    });
+
+    wrapper.addEventListener("mousemove", function (e) {
+        if (!isSelecting) return;
+
+        const rect = img.getBoundingClientRect();
+
+        const currentX = e.clientX - rect.left;
+        const currentY = e.clientY - rect.top;
+
+        const left = Math.min(startX, currentX);
+        const top = Math.min(startY, currentY);
+        const width = Math.abs(currentX - startX);
+        const height = Math.abs(currentY - startY);
+
+        selectionBox.style.left = left + "px";
+        selectionBox.style.top = top + "px";
+        selectionBox.style.width = width + "px";
+        selectionBox.style.height = height + "px";
+    });
+
+    wrapper.addEventListener("mouseup", function () {
+        if (!isSelecting) return;
+
+        isSelecting = false;
+
+        const boxLeft = parseFloat(selectionBox.style.left);
+        const boxTop = parseFloat(selectionBox.style.top);
+        const boxWidth = parseFloat(selectionBox.style.width);
+        const boxHeight = parseFloat(selectionBox.style.height);
+
+        if (boxWidth < 5 || boxHeight < 5) return;
+
+        const scaleX = img.naturalWidth / img.clientWidth;
+        const scaleY = img.naturalHeight / img.clientHeight;
+
+        document.getElementById("manualBubbleX").value = (boxLeft * scaleX).toFixed(2);
+        document.getElementById("manualBubbleY").value = (boxTop * scaleY).toFixed(2);
+        document.getElementById("manualBubbleWidth").value = (boxWidth * scaleX).toFixed(2);
+        document.getElementById("manualBubbleHeight").value = (boxHeight * scaleY).toFixed(2);
+    });
 </script>

@@ -81,4 +81,10 @@ public class BubbleRepository : IBubbleRepository
 
         _context.BubbleTranslations.RemoveRange(translations);
     }
+
+    public Task RemoveAsync(Bubble bubble)
+    {
+        _context.Bubbles.Remove(bubble);
+        return Task.CompletedTask;
+    }
 }

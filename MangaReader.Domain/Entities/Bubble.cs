@@ -15,7 +15,7 @@ public class Bubble
     public decimal Height { get; private set; }
 
     public string OriginalText { get; private set; } = null!;
-
+    public int TranslationFontSize { get; private set; } = 14;
     private readonly List<Phrase> _phrases = new();
     public IReadOnlyCollection<Phrase> Phrases => _phrases;
 
@@ -49,6 +49,7 @@ public class Bubble
         Width = width;
         Height = height;
         OriginalText = originalText;
+        TranslationFontSize = 14;
         CreatedAt = DateTime.UtcNow;
     }
 
@@ -77,7 +78,8 @@ public class Bubble
         decimal x,
         decimal y,
         decimal width,
-        decimal height)
+        decimal height,
+        int translationFontSize = 14)
     {
         if (string.IsNullOrWhiteSpace(text))
             throw new ArgumentException("Text cannot be empty", nameof(text));
@@ -85,10 +87,14 @@ public class Bubble
         if (width <= 0 || height <= 0)
             throw new ArgumentException("Width and Height must be positive");
 
+        if (translationFontSize < 8 || translationFontSize > 40)
+            throw new ArgumentException("Font size must be between 8 and 40");
+
         OriginalText = text;
         X = x;
         Y = y;
         Width = width;
         Height = height;
+        TranslationFontSize = translationFontSize;
     }
 }
