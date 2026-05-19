@@ -212,11 +212,6 @@ namespace MangaReader.Web.Controllers
             if (chapter == null)
                 return NotFound();
 
-            foreach (var page in chapter.Pages)
-            {
-                await _bubbleGroupingService.GroupPageAsync(page.Id);
-            }
-
             return RedirectToAction("ReviewOcrChapter", new { chapterId });
         }
 
@@ -979,6 +974,63 @@ namespace MangaReader.Web.Controllers
                 chapterId,
                 pageId
             });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MergeBubbles(
+            Guid chapterId,
+            Guid pageId,
+            List<Guid> bubbleIds)
+        {
+            if (bubbleIds == null || bubbleIds.Count < 2)
+                return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
+
+            var bubbles = new List<Bubble>();
+
+            foreach (var id in bubbleIds)
+            {
+                var bubble = await _bubbleRepository.GetByIdAsync(id);
+
+                if (bubble != null)
+                    bubbles.Add(bubble);
+            }
+
+            if (bubbles.Count < 2)
+                return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
+
+            var orderedBubbles = bubbles
+                .OrderBy(b => b.Y)
+                .ThenBy(b => b.X)
+                .ToList();
+
+            var x = orderedBubbles.Min(b => b.X);
+            var y = orderedBubbles.Min(b => b.Y);
+            var right = orderedBubbles.Max(b => b.X + b.Width);
+            var bottom = orderedBubbles.Max(b => b.Y + b.Height);
+
+            var text = string.Join(" ", orderedBubbles.Select(b => b.OriginalText));
+
+            var pageBubbles = await _bubbleRepository.GetByPageIdAsync(pageId);
+
+            var nextNumber = pageBubbles.Any()
+                ? pageBubbles.Max(b => b.Number) + 1
+                : 1;
+
+            var mergedBubble = new Bubble(
+                pageId,
+                nextNumber,
+                x,
+                y,
+                right - x,
+                bottom - y,
+                text
+            );
+
+            await _bubbleRepository.RemoveRangeAsync(orderedBubbles);
+            await _bubbleRepository.AddAsync(mergedBubble);
+            await _bubbleRepository.SaveChangesAsync();
+
+            return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
         }
     }
 }

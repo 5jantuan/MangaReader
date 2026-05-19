@@ -14,4 +14,5 @@ public interface IBubbleRepository
     Task UpdateAsync(Bubble bubble);
     Task RemoveTranslationsByBubbleIdAsync(Guid bubbleId);
     Task RemoveAsync(Bubble bubble);
+    Task RemoveRangeAsync(IEnumerable<Bubble> bubbles);
 }

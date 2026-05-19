@@ -13,6 +13,7 @@ public class ChapterProcessingService : IChapterProcessingService
     private readonly IOcrService _ocrService;
     private readonly ITranslationService _translationService;
     private readonly ILogger<ChapterProcessingService> _logger;
+    private readonly IBubbleGroupingService _bubbleGroupingService;
 
     public ChapterProcessingService(
         IChapterRepository chapterRepository,
@@ -20,6 +21,7 @@ public class ChapterProcessingService : IChapterProcessingService
         ILanguageRepository languageRepository,
         IOcrService ocrService,
         ITranslationService translationService,
+        IBubbleGroupingService bubbleGroupingService,
         ILogger<ChapterProcessingService> logger)
     {
         _chapterRepository = chapterRepository;
@@ -28,6 +30,7 @@ public class ChapterProcessingService : IChapterProcessingService
         _ocrService = ocrService;
         _translationService = translationService;
         _logger = logger;
+        _bubbleGroupingService = bubbleGroupingService;
     }
 
     public async Task ProcessChapterAsync(Guid chapterId)
@@ -46,12 +49,6 @@ public class ChapterProcessingService : IChapterProcessingService
 
         var sourceLanguageCode = chapter.Manga.OriginalLanguage.Code;
 
-        _logger.LogInformation(
-            "Chapter {ChapterId} loaded with {PageCount} pages. Source language: {SourceLanguageCode}",
-            chapterId,
-            chapter.Pages.Count,
-            sourceLanguageCode);
-
         chapter.MarkAsProcessing();
         await _chapterRepository.UpdateAsync(chapter);
 
@@ -62,50 +59,25 @@ public class ChapterProcessingService : IChapterProcessingService
             await _phraseRepository.RemoveByPageIdsAsync(pageIds);
             await _phraseRepository.SaveChangesAsync();
 
-            _logger.LogInformation(
-                "Removed previous OCR phrases for chapter {ChapterId}. Page count: {PageCount}",
-                chapterId,
-                pageIds.Count);
-
             foreach (var page in chapter.Pages.OrderBy(p => p.Number))
             {
                 page.MarkOcrProcessing();
                 await _chapterRepository.UpdateAsync(chapter);
 
-                _logger.LogInformation(
-                    "Processing page {PageId}, number {PageNumber}, image {ImagePath}",
-                    page.Id,
-                    page.Number,
-                    page.ImagePath);
-
                 var ocrPhrases = await _ocrService.ExtractPhrasesAsync(
                     page.ImagePath,
                     sourceLanguageCode);
 
-                _logger.LogInformation(
-                    "OCR returned {RawPhraseCount} raw phrases for page {PageId}",
-                    ocrPhrases.Count,
-                    page.Id);
-
                 var acceptedCount = 0;
-                var skippedEmpty = 0;
-                var skippedInvalidSize = 0;
                 var skippedLowConfidence = 0;
-                var skippedTooShort = 0;
 
                 foreach (var ocrPhrase in ocrPhrases)
                 {
                     if (string.IsNullOrWhiteSpace(ocrPhrase.Text))
-                    {
-                        skippedEmpty++;
                         continue;
-                    }
 
                     if (ocrPhrase.Width <= 0 || ocrPhrase.Height <= 0)
-                    {
-                        skippedInvalidSize++;
                         continue;
-                    }
 
                     if (ocrPhrase.Confidence < 0.40m)
                     {
@@ -116,10 +88,7 @@ public class ChapterProcessingService : IChapterProcessingService
                     var cleanedText = ocrPhrase.Text.Trim();
 
                     if (cleanedText.Length < 2)
-                    {
-                        skippedTooShort++;
                         continue;
-                    }
 
                     var phrase = new Phrase(
                         page.Id,
@@ -134,6 +103,10 @@ public class ChapterProcessingService : IChapterProcessingService
                     acceptedCount++;
                 }
 
+                await _phraseRepository.SaveChangesAsync();
+
+                await _bubbleGroupingService.GroupPageAsync(page.Id);
+
                 if (skippedLowConfidence > 0)
                     page.MarkOcrNeedsReview();
                 else
@@ -142,16 +115,10 @@ public class ChapterProcessingService : IChapterProcessingService
                 await _chapterRepository.UpdateAsync(chapter);
 
                 _logger.LogInformation(
-                    "Page {PageId} accepted {AcceptedCount} phrases. Skipped: empty={SkippedEmpty}, invalidSize={SkippedInvalidSize}, lowConfidence={SkippedLowConfidence}, tooShort={SkippedTooShort}",
+                    "Page {PageId} accepted {AcceptedCount} phrases",
                     page.Id,
-                    acceptedCount,
-                    skippedEmpty,
-                    skippedInvalidSize,
-                    skippedLowConfidence,
-                    skippedTooShort);
+                    acceptedCount);
             }
-
-            await _phraseRepository.SaveChangesAsync();
 
             chapter.MarkAsCompleted();
             await _chapterRepository.UpdateAsync(chapter);

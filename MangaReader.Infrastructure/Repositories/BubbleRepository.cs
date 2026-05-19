@@ -87,4 +87,10 @@ public class BubbleRepository : IBubbleRepository
         _context.Bubbles.Remove(bubble);
         return Task.CompletedTask;
     }
+
+    public Task RemoveRangeAsync(IEnumerable<Bubble> bubbles)
+    {
+        _context.Bubbles.RemoveRange(bubbles);
+        return Task.CompletedTask;
+    }
 }
