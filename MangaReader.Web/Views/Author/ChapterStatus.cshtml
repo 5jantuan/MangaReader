@@ -73,13 +73,37 @@
 
                     <br />
 
-                    <a asp-action="ReviewOcrPage"
-                    asp-route-pageId="@chapterPage.PageId"
-                    class="btn btn-sm btn-outline-primary mt-1">
-                        Проверить OCR
-                    </a>
+                    @if (Model.ChapterStatus.ToString() == "Completed")
+                    {
+                        <script>
+                            setTimeout(function () {
+                                window.location.href = '@Url.Action("ReviewOcrChapter", "Author", new { chapterId = Model.ChapterId })';
+                            }, 1200);
+                        </script>
+                    }
+                    else if (Model.ChapterStatus.ToString() == "Processing")
+                    {
+                        <div class="alert alert-info">
+                            OCR выполняется. Страница обновляется автоматически...
+                        </div>
+                    }
+                    else if (Model.ChapterStatus.ToString() == "Failed")
+                    {
+                        <div class="alert alert-danger">
+                            Обработка завершилась с ошибкой.
+                        </div>
+                    }
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
+@if (Model.ChapterStatus.ToString() == "Processing")
+{
+    <script>
+        setTimeout(function () {
+            window.location.reload();
+        }, 3000);
+    </script>
+}

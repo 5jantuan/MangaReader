@@ -205,14 +205,9 @@ namespace MangaReader.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> ConfirmChapterPages(Guid chapterId)
         {
-            await _chapterProcessingService.ProcessChapterAsync(chapterId);
+            await _chapterProcessingQueue.QueueChapterAsync(chapterId);
 
-            var chapter = await _chapterRepository.GetByIdWithPagesAsync(chapterId);
-
-            if (chapter == null)
-                return NotFound();
-
-            return RedirectToAction("ReviewOcrChapter", new { chapterId });
+            return RedirectToAction("ChapterStatus", new { chapterId });
         }
 
         [HttpPost]
@@ -1031,6 +1026,28 @@ namespace MangaReader.Web.Controllers
             await _bubbleRepository.SaveChangesAsync();
 
             return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> FinishChapterEditing(Guid chapterId)
+        {
+            var chapter = await _chapterRepository.GetByIdWithPagesAsync(chapterId);
+
+            if (chapter == null)
+                return NotFound();
+
+            chapter.MarkAsCompleted();
+
+            foreach (var page in chapter.Pages)
+            {
+                page.MarkCompleted();
+            }
+
+            await _chapterRepository.UpdateAsync(chapter);
+
+            TempData["SuccessMessage"] = "Глава успешно обработана и готова к публикации.";
+
+            return RedirectToAction("Dashboard");
         }
     }
 }
