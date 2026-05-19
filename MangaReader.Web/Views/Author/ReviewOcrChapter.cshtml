@@ -154,6 +154,15 @@
                                     Удалить бабл
                                 </button>
                             </form>
+                            <form asp-action="DuplicateBubble" method="post" class="mt-2">
+                                <input type="hidden" id="duplicateBubbleId" name="bubbleId" />
+                                <input type="hidden" name="chapterId" value="@Model.ChapterId" />
+                                <input type="hidden" name="pageId" value="@Model.CurrentPageId" />
+
+                                <button type="submit" class="btn btn-outline-primary w-100">
+                                    Дублировать бабл
+                                </button>
+                            </form>
                         </form>
                     </div>
 
@@ -337,6 +346,7 @@
 
                 document.getElementById("bubbleId").value = box.dataset.bubbleId;
                 document.getElementById("deleteBubbleId").value = box.dataset.bubbleId;
+                document.getElementById("duplicateBubbleId").value = box.dataset.bubbleId;
                 document.getElementById("bubbleText").value = box.dataset.text;
                 document.getElementById("bubbleTranslation").value = box.dataset.translation || "";
 

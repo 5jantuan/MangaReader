@@ -943,5 +943,42 @@ namespace MangaReader.Web.Controllers
 
             return Ok();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> DuplicateBubble(
+            Guid bubbleId,
+            Guid chapterId,
+            Guid pageId)
+        {
+            var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
+
+            if (bubble == null)
+                return NotFound();
+
+            var pageBubbles = await _bubbleRepository.GetByPageIdAsync(pageId);
+
+            var nextNumber = pageBubbles.Any()
+                ? pageBubbles.Max(b => b.Number) + 1
+                : 1;
+
+            var duplicatedBubble = new Bubble(
+                pageId,
+                nextNumber,
+                bubble.X + 20,
+                bubble.Y + 20,
+                bubble.Width,
+                bubble.Height,
+                bubble.OriginalText
+            );
+
+            await _bubbleRepository.AddAsync(duplicatedBubble);
+            await _bubbleRepository.SaveChangesAsync();
+
+            return RedirectToAction("ReviewOcrChapter", new
+            {
+                chapterId,
+                pageId
+            });
+        }
     }
 }

@@ -97,4 +97,16 @@ public class Bubble
         Height = height;
         TranslationFontSize = translationFontSize;
     }
+    public Bubble Clone()
+    {
+        return new Bubble(
+            PageId,
+            Number,
+            X,
+            Y,
+            Width,
+            Height,
+            OriginalText
+        );
+    }
 }
