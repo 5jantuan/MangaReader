@@ -145,6 +145,15 @@
                             <button type="submit" class="btn btn-success w-100">
                                 Сохранить бабл
                             </button>
+                            <form asp-action="DeleteBubble" method="post" class="mt-2">
+                                <input type="hidden" id="deleteBubbleId" name="bubbleId" />
+                                <input type="hidden" name="chapterId" value="@Model.ChapterId" />
+                                <input type="hidden" name="pageId" value="@Model.CurrentPageId" />
+
+                                <button type="submit" class="btn btn-danger w-100">
+                                    Удалить бабл
+                                </button>
+                            </form>
                         </form>
                     </div>
 
@@ -327,6 +336,7 @@
                 document.getElementById("editBubblePanel").style.display = "block";
 
                 document.getElementById("bubbleId").value = box.dataset.bubbleId;
+                document.getElementById("deleteBubbleId").value = box.dataset.bubbleId;
                 document.getElementById("bubbleText").value = box.dataset.text;
                 document.getElementById("bubbleTranslation").value = box.dataset.translation || "";
 
@@ -408,7 +418,12 @@
                 }
             });
 
-            document.addEventListener("mouseup", function () {
+            document.addEventListener("mouseup", async function () {
+
+                if ((isDraggingBubble || isResizingBubble) && selectedBox) {
+                    await autoSaveBubble(selectedBox);
+                }
+
                 isDraggingBubble = false;
                 isResizingBubble = false;
             });
@@ -485,4 +500,19 @@
         document.getElementById("manualBubbleWidth").value = (boxWidth * scaleX).toFixed(2);
         document.getElementById("manualBubbleHeight").value = (boxHeight * scaleY).toFixed(2);
     });
+
+    async function autoSaveBubble(box) {
+        const formData = new FormData();
+
+        formData.append("bubbleId", box.dataset.bubbleId);
+        formData.append("x", box.dataset.x);
+        formData.append("y", box.dataset.y);
+        formData.append("width", box.dataset.width);
+        formData.append("height", box.dataset.height);
+
+        await fetch("/Author/UpdateBubblePosition", {
+            method: "POST",
+            body: formData
+        });
+    }
 </script>

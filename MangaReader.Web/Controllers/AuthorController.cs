@@ -890,5 +890,58 @@ namespace MangaReader.Web.Controllers
 
             return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
         }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteBubble(
+            Guid bubbleId,
+            Guid chapterId,
+            Guid pageId)
+        {
+            var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
+
+            if (bubble == null)
+                return NotFound();
+
+            await _bubbleRepository.RemoveAsync(bubble);
+            await _bubbleRepository.SaveChangesAsync();
+
+            return RedirectToAction("ReviewOcrChapter", new
+            {
+                chapterId,
+                pageId
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateBubblePosition(
+            Guid bubbleId,
+            string x,
+            string y,
+            string width,
+            string height)
+        {
+            var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
+
+            if (bubble == null)
+                return NotFound();
+
+            var parsedX = decimal.Parse(x, CultureInfo.InvariantCulture);
+            var parsedY = decimal.Parse(y, CultureInfo.InvariantCulture);
+            var parsedWidth = decimal.Parse(width, CultureInfo.InvariantCulture);
+            var parsedHeight = decimal.Parse(height, CultureInfo.InvariantCulture);
+
+            bubble.UpdateTextAndBox(
+                bubble.OriginalText,
+                parsedX,
+                parsedY,
+                parsedWidth,
+                parsedHeight,
+                bubble.TranslationFontSize);
+
+            await _bubbleRepository.UpdateAsync(bubble);
+            await _bubbleRepository.SaveChangesAsync();
+
+            return Ok();
+        }
     }
 }
