@@ -144,8 +144,13 @@ namespace MangaReader.Web.Services
         {
             var chapter = await _context.Chapters
                 .Include(c => c.Pages)
-                    .ThenInclude(p => p.Phrases)
-                        .ThenInclude(ph => ph.PhraseTranslations)
+                    .ThenInclude(p => p.Bubbles)
+                        .ThenInclude(b => b.Translations)
+                .Include(c => c.Pages)
+                    .ThenInclude(p => p.Bubbles)
+                        .ThenInclude(b => b.Phrases)
+                .Include(c => c.Manga)
+                    .ThenInclude(m => m.OriginalLanguage)
                 .FirstOrDefaultAsync(c => c.Id == chapterId);
 
             if (chapter == null)
