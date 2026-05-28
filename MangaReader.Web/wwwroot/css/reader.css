@@ -1,0 +1,47 @@
+.reader-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 20px;
+    background: var(--bg);
+}
+
+/* PAGE */
+.reader-page {
+    display: flex;
+    justify-content: center;
+}
+
+/* IMAGE WRAPPER */
+.page-image-wrapper {
+    position: relative;
+    max-width: 800px;
+}
+
+/* IMAGE */
+.page-image {
+    width: 100%;
+    display: block;
+}
+
+/* OVERLAY */
+.bubble-overlay {
+    position: absolute;
+    inset: 0;
+}
+
+/* BUBBLE */
+.bubble {
+    position: absolute;
+
+    background: #ffffff;
+    color: #000000;
+
+    border-radius: 6px;
+    padding: 6px;
+
+    font-size: 14px;
+    line-height: 1.2;
+
+    border: 1px solid rgba(0,0,0,0.15);
+}

@@ -146,17 +146,24 @@ namespace MangaReader.Web.Services
                 .Include(c => c.Pages)
                     .ThenInclude(p => p.Bubbles)
                         .ThenInclude(b => b.Translations)
+
                 .Include(c => c.Pages)
                     .ThenInclude(p => p.Bubbles)
                         .ThenInclude(b => b.Phrases)
+
                 .Include(c => c.Manga)
                     .ThenInclude(m => m.OriginalLanguage)
+
+                .Include(c => c.Manga)
+                    .ThenInclude(m => m.Chapters)
+
                 .FirstOrDefaultAsync(c => c.Id == chapterId);
 
             if (chapter == null)
                 return null;
 
             chapter.IncrementViews();
+
             await _context.SaveChangesAsync();
 
             return chapter;

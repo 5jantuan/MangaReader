@@ -1,122 +1,223 @@
 @model MangaReader.Domain.Entities.Chapter
 
 @{
+    var pages = Model.Pages
+        .OrderBy(p => p.Number)
+        .ToList();
+
     Guid? preferredLanguageId = ViewBag.PreferredLanguageId as Guid?;
-}
-
-<h2 class="mb-4">@Model.Title</h2>
-
-@foreach (var p in Model.Pages.OrderBy(x => x.Number))
-{
-    var bubbles = p.Bubbles?.OrderBy(b => b.Number).ToList() ?? new List<MangaReader.Domain.Entities.Bubble>();
-    var pageContainerId = $"page-container-{p.Id}";
-    var imageId = $"page-image-{p.Id}";
-    var overlayId = $"page-overlay-{p.Id}";
     var originalLanguageId = Model.Manga.OriginalLanguageId;
 
-    <div class="mb-5">
-        <div id="@pageContainerId"
-             class="reader-page-container"
-             style="position: relative; display: inline-block; max-width: 100%;">
-            
-            <img id="@imageId"
-                 src="@p.ImagePath"
-                 class="reader-page-image"
-                 style="max-width: 100%; height: auto; display: block;" />
-
-            <div id="@overlayId"
-                 class="reader-page-overlay"
-                 style="position: absolute; inset: 0; pointer-events: none;">
-                
-                @if (bubbles.Any())
-                {
-                    @foreach (var bubble in bubbles)
-                    {
-                        var translations = bubble.Translations 
-                            ?? Enumerable.Empty<MangaReader.Domain.Entities.BubbleTranslation>();
-
-                        var textToShow = bubble.OriginalText;
-
-                        if (preferredLanguageId.HasValue && preferredLanguageId.Value != originalLanguageId)
-                        {
-                            var translation = translations.FirstOrDefault(t => t.LanguageId == preferredLanguageId.Value);
-                            textToShow = translation?.Text ?? bubble.OriginalText;
-                        }
-
-                        if (!string.IsNullOrWhiteSpace(textToShow))
-                        {
-                            <div class="bubble-box"
-                                data-x="@bubble.X"
-                                data-y="@bubble.Y"
-                                data-width="@bubble.Width"
-                                data-height="@bubble.Height"
-                                style="
-                                    position: absolute;
-                                    background: rgba(255, 255, 255, 0.9);
-                                    border: 1px solid rgba(0,0,0,0.12);
-                                    border-radius: 8px;
-                                    padding: 4px 6px;
-                                    font-size: @(bubble.TranslationFontSize)px;
-                                    line-height: 1.15;
-                                    overflow: hidden;
-                                    overflow-wrap: break-word;
-                                    word-break: break-word;
-                                    box-sizing: border-box;
-                                    z-index: 2;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    text-align: center;
-                                    pointer-events: auto;"
-                                title="@textToShow">
-                                @textToShow
-                            </div>
-                        }
-                    }
-                }
-            </div>
-        </div>
-
-        <details class="mt-3">
-            <summary>Отладочная информация</summary>
-
-            <div class="card mt-2">
-                <div class="card-body">
-                    @if (bubbles.Any())
-                    {
-                        <ul class="mb-0">
-                            @foreach (var bubble in bubbles)
-                            {
-                                <li>
-                                    <strong>Original:</strong> @bubble.OriginalText
-                                    <br />
-                                    @foreach (var tr in bubble.Translations ?? Enumerable.Empty<MangaReader.Domain.Entities.BubbleTranslation>())
-                                    {
-                                        <span><strong>Translation:</strong> @tr.Text</span>
-                                        <br />
-                                    }
-                                </li>
-                            }
-                        </ul>
-                    }
-                    else
-                    {
-                        <p class="text-muted mb-0">Баблов пока нет.</p>
-                    }
-                </div>
-            </div>
-        </details>
-    </div>
+    Layout = "_ReaderLayout";
+    ViewData["Title"] = Model.Title;
+    ViewData["ChapterTitle"] = $"{Model.Manga.Title} — {Model.Title}";
 }
 
+<div class="container-fluid">
+    <div class="row">
+
+        <!-- ================= LEFT THUMBS ================= -->
+        <div class="col-2 vh-100 overflow-auto border-end bg-light p-2">
+
+            @for (int i = 0; i < pages.Count; i++)
+            {
+                var chapterPage = pages[i];
+
+                <div class="mb-2 border rounded overflow-hidden"
+                     style="cursor:pointer"
+                     onclick="document.getElementById('page-@i').scrollIntoView({ behavior:'smooth' })">
+
+                    <img src="@chapterPage.ImagePath"
+                         class="img-fluid"
+                         style="height: 90px; width: 100%; object-fit: cover;" />
+
+                    <div class="text-center small bg-white">
+                        @chapterPage.Number
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        <!-- ================= CENTER READER ================= -->
+        <div class="col-8 vh-100 overflow-auto bg-dark">
+
+            <div class="d-flex flex-column align-items-center py-3">
+
+                @for (int i = 0; i < pages.Count; i++)
+                {
+                    var chapterPage = pages[i];
+
+                    var bubbles = chapterPage.Bubbles?
+                        .OrderBy(b => b.Number)
+                        .ToList()
+                        ?? new List<MangaReader.Domain.Entities.Bubble>();
+
+                    var pageContainerId = $"page-container-{chapterPage.Id}";
+                    var imageId = $"page-image-{chapterPage.Id}";
+                    var overlayId = $"page-overlay-{chapterPage.Id}";
+
+                    <div id="page-@i"
+                         class="mb-4"
+                         style="max-width: 900px; width: 100%;">
+
+                        <!-- PAGE CONTAINER -->
+                        <div id="@pageContainerId"
+                             class="reader-page-container"
+                             style="
+                                 position: relative;
+                                 width: 100%;
+                                 display: inline-block;">
+
+                            <!-- PAGE IMAGE -->
+                            <img id="@imageId"
+                                 src="@chapterPage.ImagePath"
+                                 class="reader-page-image"
+                                 style="
+                                     width: 100%;
+                                     display: block;
+                                     height: auto;" />
+
+                            <!-- BUBBLE OVERLAY -->
+                            <div id="@overlayId"
+                                 class="reader-page-overlay"
+                                 style="
+                                     position: absolute;
+                                     inset: 0;
+                                     pointer-events: none;">
+
+                                @if (bubbles.Any())
+                                {
+                                    @foreach (var bubble in bubbles)
+                                    {
+                                        var translations =
+                                            bubble.Translations
+                                            ?? Enumerable.Empty<MangaReader.Domain.Entities.BubbleTranslation>();
+
+                                        var textToShow = bubble.OriginalText;
+
+                                        if (preferredLanguageId.HasValue
+                                            && preferredLanguageId.Value != originalLanguageId)
+                                        {
+                                            var translation = translations
+                                                .FirstOrDefault(t =>
+                                                    t.LanguageId == preferredLanguageId.Value);
+
+                                            textToShow =
+                                                translation?.Text
+                                                ?? bubble.OriginalText;
+                                        }
+
+                                        if (!string.IsNullOrWhiteSpace(textToShow))
+                                        {
+                                            <div class="bubble-box"
+                                                 data-x="@bubble.X"
+                                                 data-y="@bubble.Y"
+                                                 data-width="@bubble.Width"
+                                                 data-height="@bubble.Height"
+                                                 style="
+                                                     position: absolute;
+                                                     background: rgba(255,255,255,0.92);
+                                                     border: 1px solid rgba(0,0,0,0.15);
+                                                     border-radius: 10px;
+                                                     padding: 6px 8px;
+                                                     box-sizing: border-box;
+
+                                                     overflow: hidden;
+                                                     overflow-wrap: break-word;
+                                                     word-break: break-word;
+
+                                                     display: flex;
+                                                     align-items: center;
+                                                     justify-content: center;
+                                                     text-align: center;
+
+                                                     line-height: 1.15;
+                                                     z-index: 10;
+
+                                                     pointer-events: auto;
+
+                                                     color: #111;
+                                                     font-weight: 500;
+
+                                                     font-size: @(bubble.TranslationFontSize)px;"
+                                                 title="@textToShow">
+
+                                                @textToShow
+                                            </div>
+                                        }
+                                    }
+                                }
+
+                            </div>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+            <!-- ================= CHAPTER NAV ================= -->
+            <div class="chapter-nav d-flex justify-content-center gap-3 py-4">
+
+                @if (ViewBag.PrevChapterId != null)
+                {
+                    <a class="btn btn-outline-light"
+                    href="@Url.Action("ReadChapter", "Author", new { chapterId = ViewBag.PrevChapterId })">
+                        ← Предыдущая глава
+                    </a>
+                }
+
+                @if (ViewBag.NextChapterId != null)
+                {
+                    <a class="btn btn-light"
+                    href="@Url.Action("ReadChapter", "Author", new { chapterId = ViewBag.NextChapterId })">
+                        Следующая глава →
+                    </a>
+                }
+
+            </div>
+
+        </div>
+
+        <!-- ================= RIGHT INFO ================= -->
+        <div class="col-2 vh-100 border-start bg-light p-3">
+
+            <h6>@Model.Manga.Title</h6>
+
+            <p class="text-muted">
+                @Model.Title
+            </p>
+
+            <hr />
+
+            <small class="text-muted">
+                Страниц: @pages.Count
+            </small>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ================= JS ================= -->
 <script>
-    function updatePhraseBoxes() {
-        const containers = document.querySelectorAll('.reader-page-container');
+
+    function updateBubbleBoxes() {
+
+        const containers =
+            document.querySelectorAll('.reader-page-container');
 
         containers.forEach(container => {
-            const image = container.querySelector('.reader-page-image');
-            const overlay = container.querySelector('.reader-page-overlay');
-            const boxes = container.querySelectorAll('.bubble-box');
+
+            const image =
+                container.querySelector('.reader-page-image');
+
+            const overlay =
+                container.querySelector('.reader-page-overlay');
+
+            const boxes =
+                container.querySelectorAll('.bubble-box');
 
             if (!image || !overlay || !boxes.length) {
                 return;
@@ -143,20 +244,70 @@
             const scaleY = displayedHeight / naturalHeight;
 
             boxes.forEach(box => {
-                const x = parseFloat(box.dataset.x || '0');
-                const y = parseFloat(box.dataset.y || '0');
-                const width = parseFloat(box.dataset.width || '0');
-                const height = parseFloat(box.dataset.height || '0');
 
-                box.style.left = (x * scaleX) + 'px';
-                box.style.top = (y * scaleY) + 'px';
-                box.style.width = Math.max(width * scaleX, 40) + 'px';
-                box.style.minHeight = Math.max(height * scaleY, 20) + 'px';
-                box.style.maxHeight = Math.max(height * scaleY * 2, 40) + 'px';
+                const x =
+                    parseFloat(box.dataset.x || '0');
+
+                const y =
+                    parseFloat(box.dataset.y || '0');
+
+                const width =
+                    parseFloat(box.dataset.width || '0');
+
+                const height =
+                    parseFloat(box.dataset.height || '0');
+
+                box.style.left =
+                    (x * scaleX) + 'px';
+
+                box.style.top =
+                    (y * scaleY) + 'px';
+
+                box.style.width =
+                    Math.max(width * scaleX, 40) + 'px';
+
+                box.style.minHeight =
+                    Math.max(height * scaleY, 20) + 'px';
+
+                box.style.maxHeight =
+                    Math.max(height * scaleY * 2, 40) + 'px';
             });
         });
     }
 
-    window.addEventListener('load', updatePhraseBoxes);
-    window.addEventListener('resize', updatePhraseBoxes);
+    window.addEventListener('load', () => {
+
+        const images =
+            document.querySelectorAll('.reader-page-image');
+
+        let loaded = 0;
+
+        if (!images.length) {
+            updateBubbleBoxes();
+            return;
+        }
+
+        images.forEach(img => {
+
+            if (img.complete) {
+                loaded++;
+            }
+            else {
+                img.addEventListener('load', () => {
+                    loaded++;
+
+                    if (loaded === images.length) {
+                        updateBubbleBoxes();
+                    }
+                });
+            }
+        });
+
+        if (loaded === images.length) {
+            updateBubbleBoxes();
+        }
+    });
+
+    window.addEventListener('resize', updateBubbleBoxes);
+
 </script>

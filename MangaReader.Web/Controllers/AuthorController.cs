@@ -305,18 +305,41 @@ namespace MangaReader.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ReadChapter(Guid chapterId)
         {
-            var chapter = await _mangaService.GetChapterForReadingAndIncrementViews(chapterId);
+            var chapter = await _mangaService
+                .GetChapterForReadingAndIncrementViews(chapterId);
 
             if (chapter == null)
                 return NotFound();
 
             var userId = GetCurrentUserId();
+
             var user = await _userRepository.GetByIdAsync(userId);
 
             if (user == null)
                 return NotFound();
 
             ViewBag.PreferredLanguageId = user.PreferredLanguageId;
+
+            // ================= CHAPTER NAVIGATION =================
+
+            var orderedChapters = chapter.Manga.Chapters
+                .OrderBy(c => c.Number)
+                .ToList();
+
+            var currentIndex = orderedChapters
+                .FindIndex(c => c.Id == chapter.Id);
+
+            if (currentIndex > 0)
+            {
+                ViewBag.PrevChapterId =
+                    orderedChapters[currentIndex - 1].Id;
+            }
+
+            if (currentIndex < orderedChapters.Count - 1)
+            {
+                ViewBag.NextChapterId =
+                    orderedChapters[currentIndex + 1].Id;
+            }
 
             return View(chapter);
         }
