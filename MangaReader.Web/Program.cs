@@ -61,6 +61,7 @@ builder.Services.AddHostedService<ChapterProcessingBackgroundService>();
 builder.Services.AddScoped<IPhraseService, PhraseService>();
 builder.Services.AddScoped<IPhraseGroupingService, PhraseGroupingService>();
 builder.Services.AddScoped<IBubbleGroupingService, BubbleGroupingService>();
+builder.Services.AddScoped<IBubbleEditorService, BubbleEditorService>();
 
 // Use cases
 builder.Services.AddScoped<IGetPhrasesForPageUseCase, GetPhrasesForPageUseCase>();

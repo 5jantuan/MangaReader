@@ -13,11 +13,11 @@
     ViewData["ChapterTitle"] = $"{Model.Manga.Title} — {Model.Title}";
 }
 
-<div class="container-fluid">
-    <div class="row">
+<div class="container-fluid reader-layout">
+    <div class="row g-0 reader-row">
 
         <!-- ================= LEFT THUMBS ================= -->
-        <div class="col-2 vh-100 overflow-auto border-end bg-light p-2">
+        <div class="col-2 left-sidebar border-end bg-light p-2">
 
             @for (int i = 0; i < pages.Count; i++)
             {
@@ -40,52 +40,44 @@
         </div>
 
         <!-- ================= CENTER READER ================= -->
-        <div class="col-8 vh-100 overflow-auto bg-dark">
+        <div class="col-8 center-reader bg-dark p-0">
 
-            <div class="d-flex flex-column align-items-center py-3">
-
+            <div class="d-flex flex-column align-items-center pt-3">
                 @for (int i = 0; i < pages.Count; i++)
                 {
                     var chapterPage = pages[i];
-
                     var bubbles = chapterPage.Bubbles?
                         .OrderBy(b => b.Number)
                         .ToList()
                         ?? new List<MangaReader.Domain.Entities.Bubble>();
-
                     var pageContainerId = $"page-container-{chapterPage.Id}";
                     var imageId = $"page-image-{chapterPage.Id}";
                     var overlayId = $"page-overlay-{chapterPage.Id}";
-
                     <div id="page-@i"
-                         class="mb-4"
-                         style="max-width: 900px; width: 100%;">
-
+                        class="mb-4"
+                        style="max-width: 900px; width: 100%;">
                         <!-- PAGE CONTAINER -->
                         <div id="@pageContainerId"
-                             class="reader-page-container"
-                             style="
-                                 position: relative;
-                                 width: 100%;
-                                 display: inline-block;">
-
+                            class="reader-page-container"
+                            style="
+                                position: relative;
+                                width: 100%;
+                                display: inline-block;">
                             <!-- PAGE IMAGE -->
                             <img id="@imageId"
-                                 src="@chapterPage.ImagePath"
-                                 class="reader-page-image"
-                                 style="
-                                     width: 100%;
-                                     display: block;
-                                     height: auto;" />
-
+                                src="@chapterPage.ImagePath"
+                                class="reader-page-image"
+                                style="
+                                    width: 100%;
+                                    display: block;
+                                    height: auto;" />
                             <!-- BUBBLE OVERLAY -->
                             <div id="@overlayId"
-                                 class="reader-page-overlay"
-                                 style="
-                                     position: absolute;
-                                     inset: 0;
-                                     pointer-events: none;">
-
+                                class="reader-page-overlay"
+                                style="
+                                    position: absolute;
+                                    inset: 0;
+                                    pointer-events: none;">
                                 @if (bubbles.Any())
                                 {
                                     @foreach (var bubble in bubbles)
@@ -93,73 +85,58 @@
                                         var translations =
                                             bubble.Translations
                                             ?? Enumerable.Empty<MangaReader.Domain.Entities.BubbleTranslation>();
-
                                         var textToShow = bubble.OriginalText;
-
                                         if (preferredLanguageId.HasValue
                                             && preferredLanguageId.Value != originalLanguageId)
                                         {
                                             var translation = translations
                                                 .FirstOrDefault(t =>
                                                     t.LanguageId == preferredLanguageId.Value);
-
                                             textToShow =
                                                 translation?.Text
                                                 ?? bubble.OriginalText;
                                         }
-
                                         if (!string.IsNullOrWhiteSpace(textToShow))
                                         {
                                             <div class="bubble-box"
-                                                 data-x="@bubble.X"
-                                                 data-y="@bubble.Y"
-                                                 data-width="@bubble.Width"
-                                                 data-height="@bubble.Height"
-                                                 style="
-                                                     position: absolute;
-                                                     background: rgba(255,255,255,0.92);
-                                                     border: 1px solid rgba(0,0,0,0.15);
-                                                     border-radius: 10px;
-                                                     padding: 6px 8px;
-                                                     box-sizing: border-box;
-
-                                                     overflow: hidden;
-                                                     overflow-wrap: break-word;
-                                                     word-break: break-word;
-
-                                                     display: flex;
-                                                     align-items: center;
-                                                     justify-content: center;
-                                                     text-align: center;
-
-                                                     line-height: 1.15;
-                                                     z-index: 10;
-
-                                                     pointer-events: auto;
-
-                                                     color: #111;
-                                                     font-weight: 500;
-
-                                                     font-size: @(bubble.TranslationFontSize)px;"
-                                                 title="@textToShow">
-
+                                                data-x="@bubble.X"
+                                                data-y="@bubble.Y"
+                                                data-width="@bubble.Width"
+                                                data-height="@bubble.Height"
+                                                style="
+                                                    position: absolute;
+                                                    background: rgb(255, 255, 255);
+                                                    border: 1px solid rgba(0,0,0,0.15);
+                                                    border-radius: 10px;
+                                                    padding: 6px 8px;
+                                                    box-sizing: border-box;
+                                                    overflow: hidden;
+                                                    overflow-wrap: break-word;
+                                                    word-break: break-word;
+                                                    display: flex;
+                                                    align-items: center;
+                                                    justify-content: center;
+                                                    text-align: center;
+                                                    line-height: 1.15;
+                                                    z-index: 10;
+                                                    pointer-events: auto;
+                                                    color: #111;
+                                                    font-weight: 500;
+                                                    font-size: @(bubble.TranslationFontSize)px;"
+                                                title="@textToShow">
                                                 @textToShow
                                             </div>
                                         }
                                     }
                                 }
-
                             </div>
                         </div>
-
                     </div>
                 }
-
             </div>
-
+            
             <!-- ================= CHAPTER NAV ================= -->
             <div class="chapter-nav d-flex justify-content-center gap-3 py-4">
-
                 @if (ViewBag.PrevChapterId != null)
                 {
                     <a class="btn btn-outline-light"
@@ -167,7 +144,6 @@
                         ← Предыдущая глава
                     </a>
                 }
-
                 @if (ViewBag.NextChapterId != null)
                 {
                     <a class="btn btn-light"
@@ -175,13 +151,11 @@
                         Следующая глава →
                     </a>
                 }
-
             </div>
-
         </div>
 
         <!-- ================= RIGHT INFO ================= -->
-        <div class="col-2 vh-100 border-start bg-light p-3">
+        <div class="col-2 right-sidebar border-start bg-light p-3">
 
             <h6>@Model.Manga.Title</h6>
 

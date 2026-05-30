@@ -69,7 +69,6 @@ public class BubbleRepository : IBubbleRepository
 
     public Task UpdateAsync(Bubble bubble)
     {
-        _context.Bubbles.Update(bubble);
         return Task.CompletedTask;
     }
 

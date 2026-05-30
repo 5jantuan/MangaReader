@@ -22,12 +22,11 @@ namespace MangaReader.Web.Controllers
         private readonly IChapterProcessingService _chapterProcessingService;
         private readonly IChapterProcessingQueue _chapterProcessingQueue;
         private readonly IChapterRepository _chapterRepository;
-        private readonly IPhraseRepository _phraseRepository;
         private readonly ITranslationService _translationService;
         private readonly ILanguageRepository _languageRepository;
-        private readonly IPhraseGroupingService _phraseGroupingService;
         private readonly IBubbleGroupingService _bubbleGroupingService;
         private readonly IBubbleRepository _bubbleRepository;
+        private readonly IBubbleEditorService _bubbleEditorService;
 
         public AuthorController(
             MangaService mangaService,
@@ -37,12 +36,11 @@ namespace MangaReader.Web.Controllers
             IChapterProcessingService chapterProcessingService,
             IChapterProcessingQueue chapterProcessingQueue,
             IChapterRepository chapterRepository,
-            IPhraseRepository phraseRepository,
             ITranslationService translationService,
             ILanguageRepository languageRepository,
-            IPhraseGroupingService phraseGroupingService,
             IBubbleGroupingService bubbleGroupingService,
-            IBubbleRepository bubbleRepository)
+            IBubbleRepository bubbleRepository,
+            IBubbleEditorService bubbleEditorService)
         {
             _mangaService = mangaService;
             _fileService = fileService;
@@ -51,12 +49,11 @@ namespace MangaReader.Web.Controllers
             _chapterProcessingService = chapterProcessingService;
             _chapterProcessingQueue = chapterProcessingQueue;
             _chapterRepository = chapterRepository;
-            _phraseRepository = phraseRepository;
             _translationService = translationService;
             _languageRepository = languageRepository;
-            _phraseGroupingService = phraseGroupingService;
             _bubbleGroupingService = bubbleGroupingService;
             _bubbleRepository = bubbleRepository;
+            _bubbleEditorService = bubbleEditorService;
         }
 
         private Guid GetCurrentUserId()
@@ -211,19 +208,14 @@ namespace MangaReader.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> GroupPageBubbles(Guid pageId)
+        public async Task<IActionResult> GroupPageBubbles(Guid pageId, Guid chapterId)
         {
-            var page = await _chapterRepository.GetPageWithPhrasesAndBubblesAsync(pageId);
-
-            if (page == null)
-                return NotFound();
-
             await _bubbleGroupingService.GroupPageAsync(pageId);
 
             return RedirectToAction("ReviewOcrChapter", new
             {
-                chapterId = page.ChapterId,
-                pageId = page.Id
+                chapterId,
+                pageId
             });
         }
 
@@ -439,7 +431,8 @@ namespace MangaReader.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddManualOcrPhrase(
+        public async Task<IActionResult> AddManualBubble(
+            Guid chapterId,
             Guid pageId,
             string text,
             string x,
@@ -447,91 +440,17 @@ namespace MangaReader.Web.Controllers
             string width,
             string height)
         {
-            var parsedX = decimal.Parse(x, CultureInfo.InvariantCulture);
-            var parsedY = decimal.Parse(y, CultureInfo.InvariantCulture);
-            var parsedWidth = decimal.Parse(width, CultureInfo.InvariantCulture);
-            var parsedHeight = decimal.Parse(height, CultureInfo.InvariantCulture);
-
-            var phrase = new Phrase(
+            await _bubbleEditorService.AddManualBubbleAsync(
                 pageId,
                 text,
-                parsedX,
-                parsedY,
-                parsedWidth,
-                parsedHeight,
-                1m
-            );
+                decimal.Parse(x, CultureInfo.InvariantCulture),
+                decimal.Parse(y, CultureInfo.InvariantCulture),
+                decimal.Parse(width, CultureInfo.InvariantCulture),
+                decimal.Parse(height, CultureInfo.InvariantCulture));
 
-            await _phraseRepository.AddAsync(phrase);
-
-            await _bubbleRepository.RemoveTranslationsByPageIdAsync(pageId);
-            await _bubbleRepository.RemoveByPageIdAsync(pageId);
-
-            var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
-
-            if (page != null)
-            {
-                page.MarkBubbleGroupingRequired();
-                await _chapterRepository.UpdatePageAsync(page);
-            }
-
-            await _phraseRepository.SaveChangesAsync();
-
-            return RedirectToAction("ReviewOcrPage", new { pageId });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> UpdateOcrPhrase(
-            Guid phraseId,
-            Guid pageId,
-            string text)
-        {
-            var phrase = await _phraseRepository.GetByIdAsync(phraseId);
-
-            if (phrase == null)
-                return NotFound();
-
-            phrase.UpdateText(text);
-
-            await _bubbleRepository.RemoveTranslationsByPageIdAsync(pageId);
-            await _bubbleRepository.RemoveByPageIdAsync(pageId);
-
-            var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
-
-            if (page != null)
-            {
-                page.MarkBubbleGroupingRequired();
-                await _chapterRepository.UpdatePageAsync(page);
-            }
-
-            await _phraseRepository.UpdateAsync(phrase);
-            await _phraseRepository.SaveChangesAsync();
-
-            return RedirectToAction("ReviewOcrPage", new { pageId });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteOcrPhrase(Guid phraseId, Guid pageId)
-        {
-            var phrase = await _phraseRepository.GetByIdAsync(phraseId);
-
-            if (phrase == null)
-                return NotFound();
-
-            await _phraseRepository.RemoveAsync(phrase);
-            await _bubbleRepository.RemoveTranslationsByPageIdAsync(pageId);
-            await _bubbleRepository.RemoveByPageIdAsync(pageId);
-
-            var page = await _chapterRepository.GetPageWithPhrasesAsync(pageId);
-
-            if (page != null)
-            {
-                page.MarkBubbleGroupingRequired();
-                await _chapterRepository.UpdatePageAsync(page);
-            }
-            await _phraseRepository.SaveChangesAsync();
-
-            return RedirectToAction("ReviewOcrPage", new { pageId });
+            return RedirectToAction(
+                "ReviewOcrChapter",
+                new { chapterId, pageId });
         }
 
         [HttpPost]
@@ -675,44 +594,6 @@ namespace MangaReader.Web.Controllers
             return RedirectToAction("ReviewOcrChapter", new { chapterId });
         }
 
-        [HttpPost]
-        public async Task<IActionResult> UpdateOcrBubble(
-            Guid pageId,
-            string phraseIds,
-            string text,
-            decimal x,
-            decimal y,
-            decimal width,
-            decimal height)
-        {
-            var ids = phraseIds
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(Guid.Parse)
-                .ToList();
-
-            if (!ids.Any())
-                return RedirectToAction("ReviewOcrPage", new { pageId });
-
-            var firstPhrase = await _phraseRepository.GetByIdAsync(ids.First());
-
-            if (firstPhrase == null)
-                return NotFound();
-
-            firstPhrase.UpdateTextAndBox(text, x, y, width, height);
-
-            foreach (var id in ids.Skip(1))
-            {
-                var phrase = await _phraseRepository.GetByIdAsync(id);
-
-                if (phrase != null)
-                    await _phraseRepository.RemoveAsync(phrase);
-            }
-
-            await _phraseRepository.SaveChangesAsync();
-
-            return RedirectToAction("ReviewOcrPage", new { pageId });
-        }
-
         [HttpGet]
         public async Task<IActionResult> ReviewOcrChapter(Guid chapterId, Guid? pageId)
         {
@@ -789,16 +670,14 @@ namespace MangaReader.Web.Controllers
             decimal height,
             int translationFontSize)
         {
-            var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
-
-            if (bubble == null)
-                return NotFound();
-
-            bubble.UpdateTextAndBox(text, x, y, width, height, translationFontSize);
-
-            await _bubbleRepository.RemoveTranslationsByBubbleIdAsync(bubbleId);
-            await _bubbleRepository.UpdateAsync(bubble);
-            await _bubbleRepository.SaveChangesAsync();
+            await _bubbleEditorService.UpdateBubbleAsync(
+                bubbleId,
+                text,
+                x,
+                y,
+                width,
+                height,
+                translationFontSize);
 
             return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
         }
@@ -816,113 +695,55 @@ namespace MangaReader.Web.Controllers
             string height,
             int translationFontSize)
         {
-            var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
-
-            if (bubble == null)
-                return NotFound();
-
-            var parsedX = decimal.Parse(x, CultureInfo.InvariantCulture);
-            var parsedY = decimal.Parse(y, CultureInfo.InvariantCulture);
-            var parsedWidth = decimal.Parse(width, CultureInfo.InvariantCulture);
-            var parsedHeight = decimal.Parse(height, CultureInfo.InvariantCulture);
-
-            bubble.UpdateTextAndBox(
+            await _bubbleEditorService.UpdateBubbleAsync(
+                bubbleId,
                 text,
-                parsedX,
-                parsedY,
-                parsedWidth,
-                parsedHeight,
-                translationFontSize);
-                    
-
-            if (!string.IsNullOrWhiteSpace(translation))
-            {
-                var languages = await _languageRepository.GetAllAsync();
-                var russian = languages.FirstOrDefault(l => l.Code == "ru");
-
-                if (russian != null)
-                {
-                    var existingTranslation = bubble.Translations
-                        .FirstOrDefault(t => t.LanguageId == russian.Id);
-
-                    if (existingTranslation != null)
-                    {
-                        existingTranslation.UpdateText(translation);
-                    }
-                    else
-                    {
-                        var newTranslation = new BubbleTranslation(
-                            bubble.Id,
-                            russian.Id,
-                            translation
-                        );
-
-                        await _bubbleRepository.AddTranslationAsync(newTranslation);
-                    }
-                }
-            }
-
-            await _bubbleRepository.UpdateAsync(bubble);
-            await _bubbleRepository.SaveChangesAsync();
-
-            return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AddManualBubble(
-            Guid chapterId,
-            Guid pageId,
-            string text,
-            string x,
-            string y,
-            string width,
-            string height)
-        {
-            var parsedX = decimal.Parse(x, CultureInfo.InvariantCulture);
-            var parsedY = decimal.Parse(y, CultureInfo.InvariantCulture);
-            var parsedWidth = decimal.Parse(width, CultureInfo.InvariantCulture);
-            var parsedHeight = decimal.Parse(height, CultureInfo.InvariantCulture);
-
-            var existingBubbles = await _bubbleRepository.GetByPageIdAsync(pageId);
-            var nextNumber = existingBubbles.Any()
-                ? existingBubbles.Max(b => b.Number) + 1
-                : 1;
-
-            var bubble = new Bubble(
-                pageId,
-                nextNumber,
-                parsedX,
-                parsedY,
-                parsedWidth,
-                parsedHeight,
-                text
+                decimal.Parse(x, CultureInfo.InvariantCulture),
+                decimal.Parse(y, CultureInfo.InvariantCulture),
+                decimal.Parse(width, CultureInfo.InvariantCulture),
+                decimal.Parse(height, CultureInfo.InvariantCulture),
+                translationFontSize
             );
 
-            await _bubbleRepository.AddAsync(bubble);
-            await _bubbleRepository.SaveChangesAsync();
+            // перевод НЕ трогаем через сервис (пока оставляем тут)
+            if (!string.IsNullOrWhiteSpace(translation))
+            {
+                var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
+                if (bubble == null)
+                    return NotFound();
+
+                var languages = await _languageRepository.GetAllAsync();
+                var ru = languages.FirstOrDefault(l => l.Code == "ru");
+
+                if (ru != null)
+                {
+                    var existing = bubble.Translations.FirstOrDefault(t => t.LanguageId == ru.Id);
+
+                    if (existing != null)
+                        existing.UpdateText(translation);
+                    else
+                        await _bubbleRepository.AddTranslationAsync(
+                            new BubbleTranslation(bubble.Id, ru.Id, translation));
+                }
+
+                await _bubbleRepository.SaveChangesAsync();
+            }
 
             return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
         }
 
+        
         [HttpPost]
         public async Task<IActionResult> DeleteBubble(
             Guid bubbleId,
             Guid chapterId,
             Guid pageId)
         {
-            var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
+            await _bubbleEditorService.DeleteBubbleAsync(bubbleId);
 
-            if (bubble == null)
-                return NotFound();
-
-            await _bubbleRepository.RemoveAsync(bubble);
-            await _bubbleRepository.SaveChangesAsync();
-
-            return RedirectToAction("ReviewOcrChapter", new
-            {
-                chapterId,
-                pageId
-            });
+            return RedirectToAction(
+                "ReviewOcrChapter",
+                new { chapterId, pageId });
         }
 
         [HttpPost]
@@ -933,26 +754,12 @@ namespace MangaReader.Web.Controllers
             string width,
             string height)
         {
-            var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
-
-            if (bubble == null)
-                return NotFound();
-
-            var parsedX = decimal.Parse(x, CultureInfo.InvariantCulture);
-            var parsedY = decimal.Parse(y, CultureInfo.InvariantCulture);
-            var parsedWidth = decimal.Parse(width, CultureInfo.InvariantCulture);
-            var parsedHeight = decimal.Parse(height, CultureInfo.InvariantCulture);
-
-            bubble.UpdateTextAndBox(
-                bubble.OriginalText,
-                parsedX,
-                parsedY,
-                parsedWidth,
-                parsedHeight,
-                bubble.TranslationFontSize);
-
-            await _bubbleRepository.UpdateAsync(bubble);
-            await _bubbleRepository.SaveChangesAsync();
+            await _bubbleEditorService.UpdateBubblePositionAsync(
+                bubbleId,
+                decimal.Parse(x, CultureInfo.InvariantCulture),
+                decimal.Parse(y, CultureInfo.InvariantCulture),
+                decimal.Parse(width, CultureInfo.InvariantCulture),
+                decimal.Parse(height, CultureInfo.InvariantCulture));
 
             return Ok();
         }
@@ -963,35 +770,13 @@ namespace MangaReader.Web.Controllers
             Guid chapterId,
             Guid pageId)
         {
-            var bubble = await _bubbleRepository.GetByIdAsync(bubbleId);
+            await _bubbleEditorService.DuplicateBubbleAsync(
+                bubbleId,
+                pageId);
 
-            if (bubble == null)
-                return NotFound();
-
-            var pageBubbles = await _bubbleRepository.GetByPageIdAsync(pageId);
-
-            var nextNumber = pageBubbles.Any()
-                ? pageBubbles.Max(b => b.Number) + 1
-                : 1;
-
-            var duplicatedBubble = new Bubble(
-                pageId,
-                nextNumber,
-                bubble.X + 20,
-                bubble.Y + 20,
-                bubble.Width,
-                bubble.Height,
-                bubble.OriginalText
-            );
-
-            await _bubbleRepository.AddAsync(duplicatedBubble);
-            await _bubbleRepository.SaveChangesAsync();
-
-            return RedirectToAction("ReviewOcrChapter", new
-            {
-                chapterId,
-                pageId
-            });
+            return RedirectToAction(
+                "ReviewOcrChapter",
+                new { chapterId, pageId });
         }
 
         [HttpPost]
@@ -1003,50 +788,7 @@ namespace MangaReader.Web.Controllers
             if (bubbleIds == null || bubbleIds.Count < 2)
                 return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
 
-            var bubbles = new List<Bubble>();
-
-            foreach (var id in bubbleIds)
-            {
-                var bubble = await _bubbleRepository.GetByIdAsync(id);
-
-                if (bubble != null)
-                    bubbles.Add(bubble);
-            }
-
-            if (bubbles.Count < 2)
-                return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
-
-            var orderedBubbles = bubbles
-                .OrderBy(b => b.Y)
-                .ThenBy(b => b.X)
-                .ToList();
-
-            var x = orderedBubbles.Min(b => b.X);
-            var y = orderedBubbles.Min(b => b.Y);
-            var right = orderedBubbles.Max(b => b.X + b.Width);
-            var bottom = orderedBubbles.Max(b => b.Y + b.Height);
-
-            var text = string.Join(" ", orderedBubbles.Select(b => b.OriginalText));
-
-            var pageBubbles = await _bubbleRepository.GetByPageIdAsync(pageId);
-
-            var nextNumber = pageBubbles.Any()
-                ? pageBubbles.Max(b => b.Number) + 1
-                : 1;
-
-            var mergedBubble = new Bubble(
-                pageId,
-                nextNumber,
-                x,
-                y,
-                right - x,
-                bottom - y,
-                text
-            );
-
-            await _bubbleRepository.RemoveRangeAsync(orderedBubbles);
-            await _bubbleRepository.AddAsync(mergedBubble);
-            await _bubbleRepository.SaveChangesAsync();
+            await _bubbleEditorService.MergeBubblesAsync(pageId, bubbleIds);
 
             return RedirectToAction("ReviewOcrChapter", new { chapterId, pageId });
         }
